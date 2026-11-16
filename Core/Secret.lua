@@ -10,7 +10,9 @@ local _, ns = ...
 local S = {}
 ns.Secret = S
 
--- Resolved once; both functions are missing on clients without secret values.
+-- Resolved once. Both functions only exist on clients with secret values and may be
+-- missing or renamed in other client builds, so they are read through _G on purpose:
+-- a missing function is a normal case here (nil = no secret values), not an error.
 local issecretvalue = _G.issecretvalue
 local canaccesstable = _G.canaccesstable
 

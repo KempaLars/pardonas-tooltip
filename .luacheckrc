@@ -24,13 +24,31 @@ globals = {
     },
 }
 
--- WoW API, Blizzard frames and mixins the addon reads directly.
--- Optional APIs that may be missing on this client are read through _G on purpose
--- (for example _G.issecretvalue, _G.TooltipDataProcessor, _G.C_Item) and do not
--- appear here; luacheck does not check those names.
+-- WoW API, Blizzard frames, constants and mixins the addon reads.
+-- Deliberately read through _G and therefore not listed: issecretvalue and
+-- canaccesstable (only on clients with secret values) and LibStub (only present when
+-- another addon ships it).
 read_globals = {
-    -- Frames
+    -- Frames and font objects
+    "GameTooltip",
+    "GameTooltipHeaderText",
+    "GameTooltipText",
+    "GameTooltipTextSmall",
+    "ShoppingTooltip1",
+    "ShoppingTooltip2",
     "UIParent",
+
+    -- Namespaces and enums
+    "C_ClassColor",
+    "C_Item",
+    "Enum",
+    "TooltipDataProcessor",
+
+    -- Constants and color tables
+    "ITEM_QUALITY_COLORS",
+    "RAID_CLASS_COLORS",
+    "TOOLTIP_DEFAULT_BACKGROUND_COLOR",
+    "TOOLTIP_DEFAULT_COLOR",
 
     -- Functions: frames, hooks and errors
     "CreateFrame",
@@ -41,6 +59,15 @@ read_globals = {
     "GetLocale",
     "InCombatLockdown",
     "IsLoggedIn",
+
+    -- Functions: tooltip (hook targets)
+    "GameTooltip_SetDefaultAnchor",
+    "SharedTooltip_SetBackdropStyle",
+
+    -- Functions: units
+    "UnitClass",
+    "UnitIsPlayer",
+    "UnitReaction",
 
     -- Settings API (options window)
     "CreateSettingsButtonInitializer",

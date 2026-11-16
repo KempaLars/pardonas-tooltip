@@ -26,7 +26,6 @@ local CORNERS = {
 -- Small distance between mouse cursor and tooltip for the "cursor" position.
 local CURSOR_OFFSET_X, CURSOR_OFFSET_Y = 16, 4
 
-local TOOLTIP_NAMES = { "GameTooltip", "ShoppingTooltip1", "ShoppingTooltip2" }
 
 local managed = {}                                -- tooltip -> true
 local borderColor = setmetatable({}, { __mode = "k" }) -- tooltip -> { r, g, b } from content
@@ -52,8 +51,8 @@ end
 ---------------------------------------------------------------------------
 -- Blizzard default colors (used to undo our tint)
 ---------------------------------------------------------------------------
-local function ColorFromGlobal(name, fallback)
-    local color = S.Table(_G[name])
+local function ColorFromGlobal(value, fallback)
+    local color = S.Table(value)
     if color then
         local r, g, b, a = S.Method(color, "GetRGBA")
         if type(r) == "number" and type(g) == "number" and type(b) == "number" then
@@ -64,11 +63,11 @@ local function ColorFromGlobal(name, fallback)
 end
 
 local function BlizzardBackground()
-    return ColorFromGlobal("TOOLTIP_DEFAULT_BACKGROUND_COLOR", ColorSets.BLIZZARD_BACKGROUND)
+    return ColorFromGlobal(TOOLTIP_DEFAULT_BACKGROUND_COLOR, ColorSets.BLIZZARD_BACKGROUND)
 end
 
 local function BlizzardBorder()
-    return ColorFromGlobal("TOOLTIP_DEFAULT_COLOR", ColorSets.BLIZZARD_BORDER)
+    return ColorFromGlobal(TOOLTIP_DEFAULT_COLOR, ColorSets.BLIZZARD_BORDER)
 end
 
 ---------------------------------------------------------------------------
@@ -83,7 +82,6 @@ local function ColorOf(c)
 end
 
 local function ItemBorderColor(tooltip, data)
-    local C_Item = _G.C_Item
     if type(C_Item) ~= "table" then return nil end
 
     local quality
@@ -102,7 +100,7 @@ local function ItemBorderColor(tooltip, data)
     if type(r) == "number" and type(g) == "number" and type(b) == "number" then
         return { r, g, b }
     end
-    local colors = S.Table(_G.ITEM_QUALITY_COLORS)
+    local colors = S.Table(ITEM_QUALITY_COLORS)
     return colors and ColorOf(colors[quality]) or nil
 end
 
@@ -111,26 +109,25 @@ local function UnitBorderColor(tooltip)
     unit = S.String(unit)
     if not unit then return nil end
 
-    local isPlayer = S.Boolean(S.CallClean(_G.UnitIsPlayer, unit))
+    local isPlayer = S.Boolean(S.CallClean(UnitIsPlayer, unit))
     if isPlayer == nil then return nil end
 
     if isPlayer then
-        local _, classFile = S.CallClean(_G.UnitClass, unit)
+        local _, classFile = S.CallClean(UnitClass, unit)
         classFile = S.String(classFile)
         if not classFile then return nil end
         local classColor
-        local C_ClassColor = _G.C_ClassColor
         if type(C_ClassColor) == "table" then
             classColor = ColorOf(S.CallClean(C_ClassColor.GetClassColor, classFile))
         end
         if not classColor then
-            local colors = S.Table(_G.RAID_CLASS_COLORS)
+            local colors = S.Table(RAID_CLASS_COLORS)
             classColor = colors and ColorOf(colors[classFile]) or nil
         end
         return classColor
     end
 
-    local reaction = S.Number(S.CallClean(_G.UnitReaction, unit, "player"))
+    local reaction = S.Number(S.CallClean(UnitReaction, unit, "player"))
     if not reaction then return nil end
     if reaction <= 3 then
         return ColorSets.REACTION.hostile
@@ -143,7 +140,7 @@ end
 local function ContentBorderColor(tooltip, data)
     local db = ns.db
     if not db or not db.colorBorder then return nil end
-    local types = S.Table(_G.Enum) and S.Table(_G.Enum.TooltipDataType)
+    local types = S.Table(Enum) and S.Table(Enum.TooltipDataType)
     local dataType = S.Number(S.Field(data, "type"))
     if not types or not dataType then return nil end
     if dataType == types.Item then
@@ -201,7 +198,7 @@ end
 local function OnSetDefaultAnchor(tooltip, parent)
     local db = ns.db
     if not db or db.position == "blizzard" then return end
-    if S.IsSecret(tooltip) or tooltip ~= _G.GameTooltip or not S.FrameUsable(tooltip) then return end
+    if S.IsSecret(tooltip) or tooltip ~= GameTooltip or not S.FrameUsable(tooltip) then return end
 
     local position = db.position
     if position == "cursor" then
@@ -244,8 +241,9 @@ local function OnBackdropStyle(tooltip)
 end
 
 local function InstallHooks()
-    for _, name in ipairs(TOOLTIP_NAMES) do
-        local tooltip = _G[name]
+    local tooltips = { GameTooltip, ShoppingTooltip1, ShoppingTooltip2 }
+    for i = 1, 3 do
+        local tooltip = tooltips[i]
         if S.FrameUsable(tooltip) and not managed[tooltip] then
             managed[tooltip] = true
             pcall(tooltip.HookScript, tooltip, "OnShow", OnTooltipShow)
@@ -253,19 +251,19 @@ local function InstallHooks()
         end
     end
 
-    if type(_G.GameTooltip_SetDefaultAnchor) == "function" then
+    if type(GameTooltip_SetDefaultAnchor) == "function" then
         hooksecurefunc("GameTooltip_SetDefaultAnchor", OnSetDefaultAnchor)
     end
-    if type(_G.SharedTooltip_SetBackdropStyle) == "function" then
+    if type(SharedTooltip_SetBackdropStyle) == "function" then
         hooksecurefunc("SharedTooltip_SetBackdropStyle", OnBackdropStyle)
     end
 
-    local processor = _G.TooltipDataProcessor
+    local processor = TooltipDataProcessor
     if type(processor) == "table" and type(processor.AddTooltipPostCall) == "function" then
         if processor.AllTypes ~= nil then
             processor.AddTooltipPostCall(processor.AllTypes, OnTooltipData)
         else
-            local types = S.Table(_G.Enum) and S.Table(_G.Enum.TooltipDataType)
+            local types = S.Table(Enum) and S.Table(Enum.TooltipDataType)
             if types then
                 if types.Item then processor.AddTooltipPostCall(types.Item, OnTooltipData) end
                 if types.Unit then processor.AddTooltipPostCall(types.Unit, OnTooltipData) end

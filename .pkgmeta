@@ -6,6 +6,3 @@ ignore:
   - README.md
   - media
   - .luacheckrc
-  - CLAUDE.md
-  - HANDOFF.md
-  - PROJEKT.md

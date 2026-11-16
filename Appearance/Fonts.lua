@@ -32,6 +32,8 @@ local originalFlags = {}
 -- LibSharedMedia (optional, detected at runtime)
 ---------------------------------------------------------------------------
 local function GetLSM()
+    -- LibStub is not part of the game client; it only exists when another addon ships it.
+    -- Read through _G on purpose so a missing LibStub is a normal case, not an undefined global.
     local libStub = _G.LibStub
     if type(libStub) ~= "table" or type(libStub.GetLibrary) ~= "function" then return nil end
     local ok, lsm = pcall(libStub.GetLibrary, libStub, "LibSharedMedia-3.0", true)
@@ -89,8 +91,7 @@ function Fonts.Resolve(key)
     return builtinByKey[DEFAULT_FONT].path
 end
 
-local function SetFontObject(name, path, size)
-    local object = _G[name]
+local function SetFontObject(name, object, path, size)
     if type(object) ~= "table" or type(object.SetFont) ~= "function" then return end
     if originalFlags[name] == nil then
         local ok, _, _, flags = pcall(object.GetFont, object)
@@ -109,9 +110,9 @@ function Fonts.Apply()
     if not db then return end
     local path = Fonts.Resolve(db.font)
     local textSize = db.fontSizeText
-    SetFontObject("GameTooltipHeaderText", path, db.fontSizeHeader)
-    SetFontObject("GameTooltipText", path, textSize)
-    SetFontObject("GameTooltipTextSmall", path, math.max(6, textSize - 2))
+    SetFontObject("GameTooltipHeaderText", GameTooltipHeaderText, path, db.fontSizeHeader)
+    SetFontObject("GameTooltipText", GameTooltipText, path, textSize)
+    SetFontObject("GameTooltipTextSmall", GameTooltipTextSmall, path, math.max(6, textSize - 2))
 end
 
 -- Font object names, for modules that need them.
