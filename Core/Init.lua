@@ -27,15 +27,44 @@ local function ReportError(err)
     if handler then handler(err) end
 end
 
+local skippedEvents = {}  -- event names the client does not know
+
+-- False when the client says the event does not exist, true when it exists, nil when
+-- the client cannot tell (C_EventUtils.IsEventValid missing).
+local function EventValid(event)
+    local utils = C_EventUtils
+    if type(utils) ~= "table" or type(utils.IsEventValid) ~= "function" then return nil end
+    local ok, valid = pcall(utils.IsEventValid, event)
+    if not ok then return nil end
+    return valid == true
+end
+
 -- Registers fn(event, ...) for a game event. Errors in one handler do not stop the others.
+-- Event names depend on the client version: an event the client does not know is
+-- skipped silently (no error, no chat text) and listed by /ptt debug.
+-- This is the only place that registers events; modules always go through ns.On.
 function ns.On(event, fn)
+    if skippedEvents[event] then return false end
     local list = handlers[event]
     if not list then
+        if EventValid(event) == false
+            or not pcall(eventFrame.RegisterEvent, eventFrame, event) then
+            skippedEvents[event] = true
+            return false
+        end
         list = {}
         handlers[event] = list
-        eventFrame:RegisterEvent(event)
     end
     list[#list + 1] = fn
+    return true
+end
+
+-- Sorted names of the events that were skipped because the client does not know them.
+function ns.SkippedEvents()
+    local names = {}
+    for event in pairs(skippedEvents) do names[#names + 1] = event end
+    table.sort(names)
+    return names
 end
 
 eventFrame:SetScript("OnEvent", function(_, event, ...)

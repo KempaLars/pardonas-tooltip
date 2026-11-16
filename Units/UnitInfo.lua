@@ -33,7 +33,8 @@ local CLASSIFICATIONS = {
 }
 
 -- State of the unit GameTooltip currently shows (nil when none).
--- { unit, guid (may be nil), speedLine, itemLevelShown, specShown }
+-- { unit (token used for reading; "target" when the unit is the player's target),
+--   source (token of the tooltip), guid (may be nil), speedLine, itemLevelShown, specShown }
 local current
 
 ---------------------------------------------------------------------------
@@ -271,12 +272,14 @@ local function OnUnitTooltip(tooltip, data)
     StopTicker()
     current = nil
 
-    local unit = Units.Resolve(tooltip, data)
-    if not unit then
+    local source = Units.Resolve(tooltip, data)
+    if not source then
         HealthText.SetUnit(nil)
         return
     end
-    current = { unit = unit, guid = Units.GUID(unit) }
+    -- When the unit is also the player's target, read it through "target".
+    local unit = Units.PreferTarget(source)
+    current = { unit = unit, source = source, guid = Units.GUID(unit) }
     HealthText.SetUnit(unit)
 
     local isPlayer = Units.IsPlayer(unit)
@@ -323,6 +326,14 @@ local function OnTooltipHide()
     current = nil
 end
 
+-- The player changed target while the tooltip reads its unit through "target": go back
+-- to the tooltip's own token, so health and speed keep following the right unit.
+local function OnTargetChanged()
+    if not current or current.unit ~= "target" or current.source == "target" then return end
+    current.unit = current.source
+    HealthText.SetUnit(current.source)
+end
+
 ns.OnLoad(function()
     local processor = TooltipDataProcessor
     local types = S.Table(Enum) and S.Table(Enum.TooltipDataType)
@@ -342,3 +353,5 @@ ns.OnLoad(function()
     end
     ItemLevel.OnResult(OnInspectResult)
 end)
+
+ns.On("PLAYER_TARGET_CHANGED", OnTargetChanged)

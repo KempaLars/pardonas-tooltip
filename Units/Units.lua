@@ -26,6 +26,27 @@ function Units.Resolve(tooltip, data)
     return nil
 end
 
+-- true when both tokens point to the same unit, false when not, nil when unknown.
+-- C_Secrets.CanCompareUnitTokens (if present) decides first whether the game allows the
+-- comparison at all; UnitIsUnit's answer is only used when it is not secret.
+function Units.IsSameUnit(a, b)
+    local secrets = S.Table(C_Secrets)
+    if secrets and type(secrets.CanCompareUnitTokens) == "function" then
+        if S.Boolean(S.CallClean(secrets.CanCompareUnitTokens, a, b)) == false then
+            return nil
+        end
+    end
+    return S.Boolean(S.CallClean(UnitIsUnit, a, b))
+end
+
+-- "target" when unit is also the player's target, otherwise unit itself. The target
+-- token is often readable in more detail than "mouseover".
+function Units.PreferTarget(unit)
+    if not unit or unit == "target" then return unit end
+    if Units.IsSameUnit(unit, "target") == true then return "target" end
+    return unit
+end
+
 function Units.GUID(unit)
     return S.String(S.CallClean(UnitGUID, unit))
 end

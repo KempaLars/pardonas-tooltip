@@ -45,6 +45,7 @@ read_globals = {
 
     -- Namespaces and enums
     "C_ClassColor",
+    "C_EventUtils",
     "C_Item",
     "C_Secrets",
     "C_SkillInfo",

@@ -4,7 +4,10 @@
 -- C_SkillInfo.GetSkillLineInfoByID(333) (333 = Enchanting skill line); it returns a table
 -- with name and rank. Fallback: walk the skill lines (C_SkillInfo.GetSkillLineInfo or the
 -- older global GetSkillLineInfo) and match the localized Enchanting name.
--- The result is cached and refreshed on SKILL_LINES_CHANGED and at login.
+-- The result is cached and marked for refresh at login and on SKILL_LINES_CHANGED (skill
+-- gained, profession learned or dropped), LEARNED_SPELL_IN_SKILL_LINE (a profession spell
+-- learned) and SPELLS_CHANGED (spell list changed). Marking is cheap; the refresh runs on
+-- the next tooltip that needs it. ns.On skips any of these the client does not know.
 
 local _, ns = ...
 local S = ns.Secret
@@ -85,5 +88,6 @@ local function MarkDirty()
 end
 
 ns.On("SKILL_LINES_CHANGED", MarkDirty)
-ns.On("LEARNED_SPELL_IN_TAB", MarkDirty)
+ns.On("LEARNED_SPELL_IN_SKILL_LINE", MarkDirty)
+ns.On("SPELLS_CHANGED", MarkDirty)
 ns.OnLogin(MarkDirty)

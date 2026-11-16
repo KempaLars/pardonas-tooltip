@@ -30,7 +30,8 @@ A tooltip addon for **World of Warcraft: Forever** (Interface 16001, Mainline cl
 ### Players and mobs
 
 Blizzard's lines are kept. Existing lines are only recolored; the addon's own lines are
-added at the bottom.
+added at the bottom. If the unit under the mouse is also your target, its values are read
+through your target, which the game often reveals in more detail.
 
 - **Players**: name in class color, guild line in the guild color of the color set, class
   name in class color.
@@ -162,12 +163,14 @@ If a line is missing (for example the health text or the resource of another pla
 `/ptt debug`. The addon then prints to the chat what the game lets it read, for your character,
 your mouseover unit, your target and – in a group – the first party member:
 
-- whether the unit exists, its name and whether its GUID is readable,
+- whether the unit exists, its name and whether its GUID is readable (for the mouseover
+  unit also whether it is the same unit as your target),
 - health and maximum health, and the health percentage,
 - the resource type with its name, current and maximum value, and the resource percentage,
 - whether the game's functions for hidden values (`issecretvalue`, `C_Secrets`, percent
   functions) exist, and the `C_Secrets` checks for units,
-- whether the talent tree functions exist and your own spec.
+- whether the talent tree functions exist and your own spec,
+- which game events the addon skipped because this client does not know them.
 
 Every value is shown as it is, as `secret` (the game hides it from addons) or as `nil`
 (no value). Hover a unit with the mouse and type the command into the chat to include it.

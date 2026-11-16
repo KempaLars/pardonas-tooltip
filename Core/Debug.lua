@@ -81,6 +81,8 @@ local function PrintGlobals()
         parts[#parts + 1] = "C_Secrets." .. name .. "=" .. Result(secrets[name])
     end
     if #parts > 0 then ns.Print(Pairs(parts)) end
+    local skipped = ns.SkippedEvents()
+    ns.Print(L.DEBUG_SKIPPED_EVENTS:format(#skipped > 0 and Pairs(skipped) or L.DEBUG_NONE))
     local traits = S.Table(C_Traits)
     ns.Print(Pairs({
         "GetNumTalentTabs=" .. YesNo(type(_G.GetNumTalentTabs) == "function"),
@@ -110,11 +112,17 @@ local function PrintUnit(unit)
         ns.Print(("[%s] UnitExists=%s"):format(unit, Describe(exists)))
         return
     end
-    ns.Print(("[%s] %s"):format(unit, Pairs({
+    local head = {
         "UnitExists=" .. Describe(exists),
         "UnitName=" .. Result(UnitName, unit),
         "UnitGUID=" .. GUIDState(unit),
-    })))
+    }
+    if unit == "mouseover" then
+        local same = Units.IsSameUnit("mouseover", "target")
+        head[#head + 1] = L.DEBUG_SAME_AS_TARGET .. "="
+            .. (same == nil and L.DEBUG_UNKNOWN or YesNo(same))
+    end
+    ns.Print(("[%s] %s"):format(unit, Pairs(head)))
     ns.Print(Pairs({
         "UnitHealth=" .. Result(UnitHealth, unit),
         "UnitHealthMax=" .. Result(UnitHealthMax, unit),
