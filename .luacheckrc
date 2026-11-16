@@ -30,7 +30,8 @@ globals = {
 -- another addon ships it), InspectFrame (load-on-demand Blizzard UI), TSM_API (optional
 -- TradeSkillMaster), GetNumSkillLines/GetSkillLineInfo (older skill API fallback),
 -- GetNumTalentTabs/GetTalentTabInfo (Classic talent tab API, may be missing on WoW
--- Forever) and the power type names (global strings such as MANA, looked up by token).
+-- Forever), the power type names (global strings such as MANA, looked up by token) and
+-- the classification words RARE, ELITE and BOSS (global strings, RARE may be missing).
 read_globals = {
     -- Frames and font objects
     "GameTooltip",

@@ -35,8 +35,10 @@ through your target, which the game often reveals in more detail.
 
 - **Players**: name in class color, guild line in the guild color of the color set, class
   name in class color.
-- **Mobs**: classification appended to the level line – *(Elite)*, *(Rare)*,
-  *(Rare Elite)* or *(Boss)*. Normal mobs get nothing.
+- **Mobs**: classification on the level line. If the game already writes it there (for
+  example `Elite`), that word is only colored; otherwise *(Elite)*, *(Rare)*,
+  *(Rare Elite)* or *(Boss)* is appended. Normal mobs get nothing. With the option off the
+  level line stays unchanged.
 - **Health text** on the health bar below the tooltip, for example `1,234 / 2,000 (62%)`
   (number format follows the client language). The game does not reveal the exact health
   of every unit (for example players outside your group); then only the percentage is

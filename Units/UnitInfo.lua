@@ -24,12 +24,20 @@ ns.UnitInfo = UnitInfo
 local BASE_RUN_SPEED = 7       -- yards per second at 100 % run speed
 local SPEED_INTERVAL = 0.2     -- seconds between live speed updates
 
--- Classification -> locale key and text color role.
+-- Classification -> locale key of our tag, text color role and the words the client may
+-- already write into the level line. Each word names a Blizzard global string (read
+-- through _G, may be missing) and the locale key of our tag for just that word.
+-- Rare elite is checked as its two words, because the client has no own global string
+-- for it; ITEM_QUALITY3_DESC is not used (item quality, "Selten" in German, not "Rar").
+local WORD_RARE  = { global = "RARE",  tag = "CLASS_RARE" }
+local WORD_ELITE = { global = "ELITE", tag = "CLASS_ELITE" }
+local WORD_BOSS  = { global = "BOSS",  tag = "CLASS_BOSS" }
+
 local CLASSIFICATIONS = {
-    worldboss = { text = "CLASS_BOSS",      role = "elite" },
-    rareelite = { text = "CLASS_RAREELITE", role = "rare" },
-    elite     = { text = "CLASS_ELITE",     role = "elite" },
-    rare      = { text = "CLASS_RARE",      role = "rare" },
+    worldboss = { text = "CLASS_BOSS",      role = "elite", words = { WORD_BOSS } },
+    rareelite = { text = "CLASS_RAREELITE", role = "rare",  words = { WORD_RARE, WORD_ELITE } },
+    elite     = { text = "CLASS_ELITE",     role = "elite", words = { WORD_ELITE } },
+    rare      = { text = "CLASS_RARE",      role = "rare",  words = { WORD_RARE } },
 }
 
 -- State of the unit GameTooltip currently shows (nil when none).
@@ -123,28 +131,107 @@ local function LevelPrefix()
     return nil
 end
 
--- Appends the classification to the level line. Returns the colored text when it has
--- to go into an own line instead, nil when done or nothing to show.
+-- True when byte b belongs to a word (ASCII letter or digit, or part of a UTF-8 letter).
+local function IsWordByte(b)
+    if not b then return false end
+    return b >= 128 or (b >= 48 and b <= 57) or (b >= 65 and b <= 90) or (b >= 97 and b <= 122)
+end
+
+-- Position of word in text as a whole word (plain search, no patterns built from game
+-- text). Returns first, last; "ambiguous" when it occurs more than once; nil when absent.
+local function FindWord(text, word)
+    local found
+    local start = 1
+    while true do
+        local first, last = text:find(word, start, true)
+        if not first then break end
+        if not IsWordByte(text:byte(first - 1)) and not IsWordByte(text:byte(last + 1)) then
+            if found then return "ambiguous" end
+            found = { first, last }
+        end
+        start = last + 1
+    end
+    if not found then return nil end
+    return found[1], found[2]
+end
+
+-- Handles the level line text for a classification entry. Returns the new text, or
+-- nil to leave the line unchanged.
+--   * Words the client already wrote are colored in the set color (each must occur
+--     exactly once as a whole word; already colored by us counts as done).
+--   * Words it did not write are appended as our tags, for example "(Elite)".
+--   * Anything ambiguous: line unchanged.
+local function ClassifiedLevelText(lineText, entry)
+    local missing, ranges = {}, {}
+    for _, word in ipairs(entry.words) do
+        local global = S.String(_G[word.global])
+        local first, last
+        if global and global ~= "" then
+            if lineText:find(ColorSets.Colorize(entry.role, global), 1, true) then
+                first = "done"
+            else
+                first, last = FindWord(lineText, global)
+            end
+        end
+        if first == "ambiguous" then return nil end
+        if first == nil then
+            missing[#missing + 1] = word
+        elseif first ~= "done" then
+            ranges[#ranges + 1] = { first, last }
+        end
+    end
+
+    -- Our full tag already present (tooltip refreshed): nothing to do.
+    local fullTag = ColorSets.Colorize(entry.role, L[entry.text])
+    if lineText:find(fullTag, 1, true) then return nil end
+
+    -- Color the found words, from the back so earlier positions stay valid.
+    table.sort(ranges, function(a, b) return a[1] > b[1] end)
+    local text = lineText
+    for _, range in ipairs(ranges) do
+        local first, last = range[1], range[2]
+        text = text:sub(1, first - 1) .. ColorSets.Colorize(entry.role, text:sub(first, last))
+            .. text:sub(last + 1)
+    end
+
+    if #missing == #entry.words then
+        text = text .. " " .. fullTag
+    else
+        for _, word in ipairs(missing) do
+            local tag = ColorSets.Colorize(entry.role, L[word.tag])
+            if not text:find(tag, 1, true) then text = text .. " " .. tag end
+        end
+    end
+    if text == lineText then return nil end
+    return text
+end
+
+-- Marks the classification on the level line: colors it when the client already wrote
+-- it, otherwise appends our tag. Returns the colored tag when it has to go into an own
+-- line instead (no level line found), nil when done or nothing to show.
 local function MarkClassification(tooltip, unit)
     local classification = S.String(S.CallClean(UnitClassification, unit))
     local entry = classification and CLASSIFICATIONS[classification]
     if not entry then return nil end
-    local text = ColorSets.Colorize(entry.role, L[entry.text])
 
     local prefix = LevelPrefix()
     if prefix then
         for i = 2, Units.NumLines(tooltip) do
             local fontString = Units.Line(tooltip, "Left", i)
+            -- A secret line could be the level line: then change nothing at all, an own
+            -- line might repeat what the client already wrote.
+            if fontString and S.IsSecret(S.Call(fontString.GetText, fontString)) then
+                return nil
+            end
             local lineText = Units.LineText(fontString)
             if lineText and lineText:sub(1, #prefix) == prefix then
-                if not lineText:find(text, 1, true) then
-                    S.Method(fontString, "SetText", lineText .. " " .. text)
-                end
+                local text = ClassifiedLevelText(lineText, entry)
+                if text then S.Method(fontString, "SetText", text) end
                 return nil
             end
         end
     end
-    return text
+    return ColorSets.Colorize(entry.role, L[entry.text])
 end
 
 ---------------------------------------------------------------------------
