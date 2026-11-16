@@ -2,7 +2,7 @@
 
 A tooltip addon for **World of Warcraft: Forever** (Interface 16001, Mainline client with the Midnight API).
 
-> **Beta** – this addon is in an early stage. The current version covers the tooltip appearance and information on player and mob tooltips. Please report problems in the GitHub issues.
+> **Beta** – this addon is in an early stage. The current version covers the tooltip appearance, player and mob information, item level and gear comparison. Please report problems in the GitHub issues.
 
 ## Features (current state)
 
@@ -49,6 +49,30 @@ added at the bottom.
   is added. Inspect requests of other addons are not disturbed.
   The average covers the equipped slots except shirt and tabard (17 slots including the
   ranged slot); a two-handed weapon with an empty off-hand counts twice.
+
+### Items
+
+- **Item level** of equipment (weapons, armor, jewelry, shields, off-hand items), shown
+  right-aligned in the title line as `iLvl 25`. If that place is already used, an own line
+  `Item level: 25` is added instead. Consumables, materials, recipes and quest items get no
+  item level. Works in the normal tooltip, chat link tooltips and Blizzard's comparison
+  tooltips.
+- **Always visible gear comparison** below the tooltip (normal tooltip and chat links) for
+  equipment your character can wear (the character level is ignored). The numbers come from
+  the same game function Blizzard uses for its "If you replace this item" section, so they
+  match Blizzard's Shift comparison; stat names are the game's own, localized texts.
+  - One block per equipped item: `Instead of <item>:` followed by the changed values
+    (`+7 Armor` as gain, `-3 Stamina` as loss), or `no change`.
+  - Rings and trinkets: one block for each equipped ring or trinket.
+  - One-hand weapons: against the main hand, plus the off-hand if you can dual wield.
+  - Two-hand weapons: one block against main and off-hand together.
+  - Shields and off-hand items: against the off-hand, or against an equipped two-hand weapon.
+  - Empty slot: `(empty slot)` with all values of the new item as gains.
+  - No comparison for the item you are wearing and in the comparison tooltips.
+  - Blizzard's own Shift comparison is not changed.
+- **Hide the appearance collection hint** ("You haven't collected this appearance"); the line
+  is removed before it is drawn, without leaving a gap.
+- Lines of other addons (for example TradeSkillMaster or ArkInventory) are not changed.
 
 ### General
 
@@ -107,14 +131,23 @@ Open with `/ptt` or via *Options → AddOns → Pardona's ToolTips*.
 | Item level (players) | On |
 | Classification (mobs) | On |
 
+**Items**
+
+| Option | Default |
+| --- | --- |
+| Item level on items | On |
+| Show comparison | Always (choices: Always, Only with Shift, Off) |
+| Hide appearance collection hint | On |
+
+With *Only with Shift* the comparison appears and disappears as soon as Shift is pressed or
+released.
+
 **General**
 
 - *Reset settings* – restores all defaults.
 
 ## Planned
 
-- Item level on item tooltips
-- Item comparison
 - Prices and disenchanting values with TradeSkillMaster
 - Item sources
 - Vendor recipes

@@ -79,6 +79,18 @@ L.OPT_ITEM_LEVEL_TT        = "Zeigt das durchschnittliche Itemlevel. Andere Spie
 L.OPT_CLASSIFICATION       = "Einstufung (Mobs)"
 L.OPT_CLASSIFICATION_TT    = "Hängt Elite, Rar, Rar-Elite oder Boss an die Stufenzeile von Mobs an."
 
+-- Options: items
+L.SECTION_ITEMS            = "Items"
+L.OPT_ITEM_LEVEL_ITEMS     = "Itemlevel bei Items"
+L.OPT_ITEM_LEVEL_ITEMS_TT  = "Zeigt das Itemlevel von Ausrüstung in der Titelzeile des Tooltips."
+L.OPT_COMPARE              = "Vergleich anzeigen"
+L.OPT_COMPARE_TT           = "Vergleicht tragbare Ausrüstung unter dem Tooltip mit der angelegten. Blizzards eigener Shift-Vergleich bleibt unverändert."
+L.COMPARE_ALWAYS           = "Immer"
+L.COMPARE_SHIFT            = "Nur mit Shift"
+L.COMPARE_OFF              = "Aus"
+L.OPT_HIDE_APPEARANCE      = "Sammel-Hinweis für Aussehen ausblenden"
+L.OPT_HIDE_APPEARANCE_TT   = "Blendet in Item-Tooltips den Hinweis aus, dass du dieses Aussehen noch nicht gesammelt hast."
+
 -- Tooltip lines
 L.LINE_TARGET       = "Ziel:"
 L.LINE_SPEED        = "Tempo:"
@@ -89,6 +101,12 @@ L.CLASS_ELITE       = "(Elite)"
 L.CLASS_RARE        = "(Rar)"
 L.CLASS_RAREELITE   = "(Rar-Elite)"
 L.CLASS_BOSS        = "(Boss)"
+L.ITEM_LEVEL_SHORT  = "iLvl %s"
+L.INSTEAD_OF        = "Statt %s:"
+L.EMPTY_SLOT        = "(Slot leer)"
+L.COMPARE_NO_CHANGE = "keine Veränderung"
+L.SLOT_RING         = "Ring %d"
+L.SLOT_TRINKET      = "Schmuck %d"
 
 -- Number formats
 L.THOUSANDS_SEPARATOR = "."

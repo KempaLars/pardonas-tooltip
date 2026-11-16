@@ -30,6 +30,10 @@ ns.DEFAULTS = {
     unitMana           = true,
     unitItemLevel      = true,
     unitClassification = true,
+    -- Items (added without migration: missing fields get defaults)
+    itemLevel          = true,
+    itemCompare        = "always", -- "always", "shift" or "off"
+    itemHideAppearance = true,
 }
 
 -- Valid ranges for numeric settings: { min, max, step }.

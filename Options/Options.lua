@@ -106,6 +106,14 @@ local function ColorSetEntries()
     return list
 end
 
+local function CompareEntries()
+    return {
+        { value = "always", label = L.COMPARE_ALWAYS },
+        { value = "shift",  label = L.COMPARE_SHIFT },
+        { value = "off",    label = L.COMPARE_OFF },
+    }
+end
+
 local function FontEntries()
     return ns.Fonts.List()
 end
@@ -168,6 +176,11 @@ local function Build()
     AddCheckbox("unitMana", L.OPT_MANA, L.OPT_MANA_TT)
     AddCheckbox("unitItemLevel", L.OPT_ITEM_LEVEL, L.OPT_ITEM_LEVEL_TT)
     AddCheckbox("unitClassification", L.OPT_CLASSIFICATION, L.OPT_CLASSIFICATION_TT)
+
+    AddHeader(L.SECTION_ITEMS)
+    AddCheckbox("itemLevel", L.OPT_ITEM_LEVEL_ITEMS, L.OPT_ITEM_LEVEL_ITEMS_TT)
+    AddDropdown("itemCompare", L.OPT_COMPARE, L.OPT_COMPARE_TT, CompareEntries)
+    AddCheckbox("itemHideAppearance", L.OPT_HIDE_APPEARANCE, L.OPT_HIDE_APPEARANCE_TT)
 
     AddHeader(L.SECTION_GENERAL)
     AddButton(L.RESET, L.RESET_BUTTON, Options.ResetAll, L.RESET_TT)

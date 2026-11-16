@@ -1,11 +1,12 @@
 ## Interface: 16001
 ## Title: Pardona's ToolTips
-## Notes: Tooltip appearance plus player and mob info: class colors, target, speed, mana, health text and item level.
-## Notes-deDE: Tooltip-Aussehen plus Spieler- und Mob-Infos: Klassenfarben, Ziel, Tempo, Mana, Lebens-Text und Itemlevel.
+## Notes: Tooltip appearance, player and mob info, item level and an always visible gear comparison.
+## Notes-deDE: Tooltip-Aussehen, Spieler- und Mob-Infos, Itemlevel und ein ständig sichtbarer Ausrüstungsvergleich.
 ## Author: Pardona
 ## Version: @project-version@
 ## SavedVariables: PardonasToolTipsDB
 ## X-License: GPL-3.0
+## X-Curse-Project-ID: 1810747
 
 Locales\enUS.lua
 Locales\deDE.lua
@@ -23,6 +24,11 @@ Appearance\Appearance.lua
 Units\HealthText.lua
 Units\ItemLevel.lua
 Units\UnitInfo.lua
+
+Items\Items.lua
+Items\Wearable.lua
+Items\Compare.lua
+Items\ItemInfo.lua
 
 Options\Options.lua
 

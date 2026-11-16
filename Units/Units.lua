@@ -112,6 +112,26 @@ function Units.Line(tooltip, side, index)
     return fontString
 end
 
+-- Appends "label  value" in the set's label color; value color defaults to the set's
+-- value color. Returns the index of the new line (0 when unknown).
+function Units.AddPair(tooltip, label, value, valueColor)
+    local lr, lg, lb = ColorSets.TextColor("label")
+    local vr, vg, vb
+    if valueColor then
+        vr, vg, vb = valueColor[1], valueColor[2], valueColor[3]
+    else
+        vr, vg, vb = ColorSets.TextColor("value")
+    end
+    S.Method(tooltip, "AddDoubleLine", label, value, lr, lg, lb, vr, vg, vb)
+    return Units.NumLines(tooltip)
+end
+
+-- Appends a single line in the color of a text role of the current set.
+function Units.AddRoleLine(tooltip, text, role)
+    local r, g, b = ColorSets.TextColor(role)
+    S.Method(tooltip, "AddLine", text, r, g, b)
+end
+
 -- Text of a font string, nil when empty or secret.
 function Units.LineText(fontString)
     if not fontString then return nil end

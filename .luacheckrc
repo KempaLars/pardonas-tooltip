@@ -35,6 +35,7 @@ read_globals = {
     "GameTooltipStatusBar",
     "GameTooltipText",
     "GameTooltipTextSmall",
+    "ItemRefTooltip",
     "ShoppingTooltip1",
     "ShoppingTooltip2",
     "UIParent",
@@ -43,15 +44,21 @@ read_globals = {
     "C_ClassColor",
     "C_Item",
     "C_Timer",
+    "C_TooltipComparison",
+    "C_TooltipInfo",
     "Enum",
+    "ItemLocation",
     "TooltipDataProcessor",
 
     -- Constants, global strings and color tables
+    "INVTYPE_WEAPONMAINHAND",
+    "INVTYPE_WEAPONOFFHAND",
     "ITEM_QUALITY_COLORS",
     "RAID_CLASS_COLORS",
     "TOOLTIP_DEFAULT_BACKGROUND_COLOR",
     "TOOLTIP_DEFAULT_COLOR",
     "TOOLTIP_UNIT_LEVEL",
+    "TRANSMOGRIFY_TOOLTIP_APPEARANCE_UNKNOWN",
 
     -- Functions: frames, hooks and errors
     "CreateFrame",
@@ -63,8 +70,10 @@ read_globals = {
     "GetTime",
     "InCombatLockdown",
     "IsLoggedIn",
+    "IsShiftKeyDown",
 
     -- Functions: inspect and equipment
+    "CanDualWield",
     "CanInspect",
     "CheckInteractDistance",
     "ClearInspectPlayer",

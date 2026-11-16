@@ -36,18 +36,7 @@ local current
 -- Helpers
 ---------------------------------------------------------------------------
 
--- Appends "label  value"; value color defaults to the set's value color.
-local function AddPair(tooltip, label, value, valueColor)
-    local lr, lg, lb = ColorSets.TextColor("label")
-    local vr, vg, vb
-    if valueColor then
-        vr, vg, vb = valueColor[1], valueColor[2], valueColor[3]
-    else
-        vr, vg, vb = ColorSets.TextColor("value")
-    end
-    S.Method(tooltip, "AddDoubleLine", label, value, lr, lg, lb, vr, vg, vb)
-    return Units.NumLines(tooltip)
-end
+local AddPair = Units.AddPair
 
 local function SetLineColor(fontString, color)
     if fontString and color then

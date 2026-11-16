@@ -83,6 +83,18 @@ L.OPT_ITEM_LEVEL_TT        = "Shows the average item level. Other players are in
 L.OPT_CLASSIFICATION       = "Classification (mobs)"
 L.OPT_CLASSIFICATION_TT    = "Adds Elite, Rare, Rare Elite or Boss to the level line of mobs."
 
+-- Options: items
+L.SECTION_ITEMS            = "Items"
+L.OPT_ITEM_LEVEL_ITEMS     = "Item level on items"
+L.OPT_ITEM_LEVEL_ITEMS_TT  = "Shows the item level of equipment in the title line of the tooltip."
+L.OPT_COMPARE              = "Show comparison"
+L.OPT_COMPARE_TT           = "Compares equipment you can wear with what you have equipped, below the tooltip. Blizzard's own Shift comparison stays unchanged."
+L.COMPARE_ALWAYS           = "Always"
+L.COMPARE_SHIFT            = "Only with Shift"
+L.COMPARE_OFF              = "Off"
+L.OPT_HIDE_APPEARANCE      = "Hide appearance collection hint"
+L.OPT_HIDE_APPEARANCE_TT   = "Hides the line \"You haven't collected this appearance\" in item tooltips."
+
 -- Tooltip lines
 L.LINE_TARGET       = "Target:"
 L.LINE_SPEED        = "Speed:"
@@ -93,6 +105,12 @@ L.CLASS_ELITE       = "(Elite)"
 L.CLASS_RARE        = "(Rare)"
 L.CLASS_RAREELITE   = "(Rare Elite)"
 L.CLASS_BOSS        = "(Boss)"
+L.ITEM_LEVEL_SHORT  = "iLvl %s"
+L.INSTEAD_OF        = "Instead of %s:"
+L.EMPTY_SLOT        = "(empty slot)"
+L.COMPARE_NO_CHANGE = "no change"
+L.SLOT_RING         = "Ring %d"
+L.SLOT_TRINKET      = "Trinket %d"
 
 -- Number formats
 L.THOUSANDS_SEPARATOR = ","
