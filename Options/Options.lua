@@ -18,6 +18,7 @@ local settings = {} -- db key -> setting object
 ---------------------------------------------------------------------------
 local function OnSettingChanged()
     ns.Appearance.Refresh()
+    ns.HealthText.Update()
 end
 
 local function RegisterSetting(key, name)
@@ -156,6 +157,17 @@ local function Build()
     AddSlider("fontSizeText", L.FONT_SIZE_TEXT, L.FONT_SIZE_TEXT_TT, FormatPoints)
     AddDropdown("colorSet", L.COLOR_SET, L.COLOR_SET_TT, ColorSetEntries)
     AddCheckbox("colorBorder", L.COLOR_BORDER, L.COLOR_BORDER_TT)
+
+    AddHeader(L.SECTION_UNITS)
+    AddCheckbox("unitNameClassColor", L.OPT_NAME_CLASS_COLOR, L.OPT_NAME_CLASS_COLOR_TT)
+    AddCheckbox("unitGuildColor", L.OPT_GUILD_COLOR, L.OPT_GUILD_COLOR_TT)
+    AddCheckbox("unitClassLineColor", L.OPT_CLASS_LINE_COLOR, L.OPT_CLASS_LINE_COLOR_TT)
+    AddCheckbox("unitHealthText", L.OPT_HEALTH_TEXT, L.OPT_HEALTH_TEXT_TT)
+    AddCheckbox("unitTarget", L.OPT_TARGET, L.OPT_TARGET_TT)
+    AddCheckbox("unitSpeed", L.OPT_SPEED, L.OPT_SPEED_TT)
+    AddCheckbox("unitMana", L.OPT_MANA, L.OPT_MANA_TT)
+    AddCheckbox("unitItemLevel", L.OPT_ITEM_LEVEL, L.OPT_ITEM_LEVEL_TT)
+    AddCheckbox("unitClassification", L.OPT_CLASSIFICATION, L.OPT_CLASSIFICATION_TT)
 
     AddHeader(L.SECTION_GENERAL)
     AddButton(L.RESET, L.RESET_BUTTON, Options.ResetAll, L.RESET_TT)

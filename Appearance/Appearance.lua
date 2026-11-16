@@ -73,14 +73,6 @@ end
 ---------------------------------------------------------------------------
 -- Border color from tooltip content (secret-safe; nil when unknown)
 ---------------------------------------------------------------------------
-local function ColorOf(c)
-    c = S.Table(c)
-    if not c then return nil end
-    local r, g, b = S.Number(S.Field(c, "r")), S.Number(S.Field(c, "g")), S.Number(S.Field(c, "b"))
-    if r and g and b then return { r, g, b } end
-    return nil
-end
-
 local function ItemBorderColor(tooltip, data)
     if type(C_Item) ~= "table" then return nil end
 
@@ -101,40 +93,14 @@ local function ItemBorderColor(tooltip, data)
         return { r, g, b }
     end
     local colors = S.Table(ITEM_QUALITY_COLORS)
-    return colors and ColorOf(colors[quality]) or nil
+    return colors and ColorSets.FromColorTable(colors[quality]) or nil
 end
 
-local function UnitBorderColor(tooltip)
-    local _, unit = S.Method(tooltip, "GetUnit")
-    unit = S.String(unit)
+-- Players in class color, NPCs in reaction color (see ns.Units).
+local function UnitBorderColor(tooltip, data)
+    local unit = ns.Units.Resolve(tooltip, data)
     if not unit then return nil end
-
-    local isPlayer = S.Boolean(S.CallClean(UnitIsPlayer, unit))
-    if isPlayer == nil then return nil end
-
-    if isPlayer then
-        local _, classFile = S.CallClean(UnitClass, unit)
-        classFile = S.String(classFile)
-        if not classFile then return nil end
-        local classColor
-        if type(C_ClassColor) == "table" then
-            classColor = ColorOf(S.CallClean(C_ClassColor.GetClassColor, classFile))
-        end
-        if not classColor then
-            local colors = S.Table(RAID_CLASS_COLORS)
-            classColor = colors and ColorOf(colors[classFile]) or nil
-        end
-        return classColor
-    end
-
-    local reaction = S.Number(S.CallClean(UnitReaction, unit, "player"))
-    if not reaction then return nil end
-    if reaction <= 3 then
-        return ColorSets.REACTION.hostile
-    elseif reaction == 4 then
-        return ColorSets.REACTION.neutral
-    end
-    return ColorSets.REACTION.friendly
+    return ns.Units.Color(unit)
 end
 
 local function ContentBorderColor(tooltip, data)
@@ -146,7 +112,7 @@ local function ContentBorderColor(tooltip, data)
     if dataType == types.Item then
         return ItemBorderColor(tooltip, data)
     elseif dataType == types.Unit then
-        return UnitBorderColor(tooltip)
+        return UnitBorderColor(tooltip, data)
     end
     return nil
 end

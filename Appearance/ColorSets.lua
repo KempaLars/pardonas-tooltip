@@ -99,6 +99,17 @@ ColorSets.REACTION = {
 ColorSets.BLIZZARD_BACKGROUND = { 0.09, 0.09, 0.19, 1.00 }
 ColorSets.BLIZZARD_BORDER     = { 1.00, 1.00, 1.00, 1.00 }
 
+-- { r, g, b } from a Blizzard color table/ColorMixin with r, g, b fields, or nil when
+-- the table or one of its fields is missing or secret.
+function ColorSets.FromColorTable(c)
+    local S = ns.Secret
+    c = S.Table(c)
+    if not c then return nil end
+    local r, g, b = S.Number(S.Field(c, "r")), S.Number(S.Field(c, "g")), S.Number(S.Field(c, "b"))
+    if r and g and b then return { r, g, b } end
+    return nil
+end
+
 -- Display order of the set keys.
 function ColorSets.Order()
     return ORDER
@@ -127,11 +138,21 @@ function ColorSets.TextColor(role)
     return c[1], c[2], c[3]
 end
 
--- "|cffrrggbb" escape for a text role in the current set.
-function ColorSets.TextEscape(role)
-    local r, g, b = ColorSets.TextColor(role)
+-- "|cffrrggbb" escape for r, g, b in 0..1.
+function ColorSets.Escape(r, g, b)
     local floor = math.floor
     return ("|cff%02x%02x%02x"):format(floor(r * 255 + 0.5), floor(g * 255 + 0.5), floor(b * 255 + 0.5))
+end
+
+-- "|cffrrggbb" escape for a text role in the current set.
+function ColorSets.TextEscape(role)
+    return ColorSets.Escape(ColorSets.TextColor(role))
+end
+
+-- { r, g, b } of a text role in the current set.
+function ColorSets.Role(role)
+    local r, g, b = ColorSets.TextColor(role)
+    return { r, g, b }
 end
 
 -- text wrapped in the color of a role. text must not be a secret value.

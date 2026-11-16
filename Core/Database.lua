@@ -20,6 +20,16 @@ ns.DEFAULTS = {
     fontSizeText   = 12,
     colorSet       = "blizzard",
     colorBorder    = true,
+    -- Players & mobs (added in 0.1.0 without migration: missing fields get defaults)
+    unitNameClassColor = true,
+    unitGuildColor     = true,
+    unitClassLineColor = true,
+    unitHealthText     = true,
+    unitTarget         = true,
+    unitSpeed          = true,
+    unitMana           = true,
+    unitItemLevel      = true,
+    unitClassification = true,
 }
 
 -- Valid ranges for numeric settings: { min, max, step }.

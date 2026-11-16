@@ -26,12 +26,13 @@ globals = {
 
 -- WoW API, Blizzard frames, constants and mixins the addon reads.
 -- Deliberately read through _G and therefore not listed: issecretvalue and
--- canaccesstable (only on clients with secret values) and LibStub (only present when
--- another addon ships it).
+-- canaccesstable (only on clients with secret values), LibStub (only present when
+-- another addon ships it) and InspectFrame (load-on-demand Blizzard UI).
 read_globals = {
     -- Frames and font objects
     "GameTooltip",
     "GameTooltipHeaderText",
+    "GameTooltipStatusBar",
     "GameTooltipText",
     "GameTooltipTextSmall",
     "ShoppingTooltip1",
@@ -41,14 +42,16 @@ read_globals = {
     -- Namespaces and enums
     "C_ClassColor",
     "C_Item",
+    "C_Timer",
     "Enum",
     "TooltipDataProcessor",
 
-    -- Constants and color tables
+    -- Constants, global strings and color tables
     "ITEM_QUALITY_COLORS",
     "RAID_CLASS_COLORS",
     "TOOLTIP_DEFAULT_BACKGROUND_COLOR",
     "TOOLTIP_DEFAULT_COLOR",
+    "TOOLTIP_UNIT_LEVEL",
 
     -- Functions: frames, hooks and errors
     "CreateFrame",
@@ -57,16 +60,37 @@ read_globals = {
 
     -- Functions: game state
     "GetLocale",
+    "GetTime",
     "InCombatLockdown",
     "IsLoggedIn",
+
+    -- Functions: inspect and equipment
+    "CanInspect",
+    "CheckInteractDistance",
+    "ClearInspectPlayer",
+    "GetInventoryItemID",
+    "GetInventoryItemLink",
+    "NotifyInspect",
 
     -- Functions: tooltip (hook targets)
     "GameTooltip_SetDefaultAnchor",
     "SharedTooltip_SetBackdropStyle",
 
     -- Functions: units
+    "GetGuildInfo",
+    "GetUnitSpeed",
     "UnitClass",
+    "UnitClassification",
+    "UnitExists",
+    "UnitGUID",
+    "UnitHealth",
+    "UnitHealthMax",
     "UnitIsPlayer",
+    "UnitIsUnit",
+    "UnitName",
+    "UnitPower",
+    "UnitPowerMax",
+    "UnitPowerType",
     "UnitReaction",
 
     -- Settings API (options window)

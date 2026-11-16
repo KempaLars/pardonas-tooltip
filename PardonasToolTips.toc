@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Pardona's ToolTips
-## Notes: Tooltip appearance and position: anchor, scale, fonts, color sets and colored borders.
-## Notes-deDE: Aussehen und Position der Tooltips: Anker, Skalierung, Schrift, Farb-Sets und eingefärbte Rahmen.
+## Notes: Tooltip appearance plus player and mob info: class colors, target, speed, mana, health text and item level.
+## Notes-deDE: Tooltip-Aussehen plus Spieler- und Mob-Infos: Klassenfarben, Ziel, Tempo, Mana, Lebens-Text und Itemlevel.
 ## Author: Pardona
 ## Version: @project-version@
 ## SavedVariables: PardonasToolTipsDB
@@ -13,10 +13,16 @@ Locales\deDE.lua
 Core\Init.lua
 Core\Secret.lua
 Core\Database.lua
+Core\Format.lua
 
 Appearance\ColorSets.lua
 Appearance\Fonts.lua
+Units\Units.lua
 Appearance\Appearance.lua
+
+Units\HealthText.lua
+Units\ItemLevel.lua
+Units\UnitInfo.lua
 
 Options\Options.lua
 
