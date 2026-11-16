@@ -95,6 +95,107 @@ function Units.Color(unit)
 end
 
 ---------------------------------------------------------------------------
+-- Health and power
+--
+-- Results come in three grades, matching what the game lets addons read:
+--   "exact",   current, max   both numbers readable (max > 0)
+--   "percent", percent        only the percentage (0-100) is readable
+--   "secret",  value          the percentage is a secret value (0-100); it may only be
+--                             passed on to the game (string.format, SetText), never
+--                             compared or calculated
+-- nil means nothing to show (unit gone, no resource, maximum 0, API missing).
+---------------------------------------------------------------------------
+
+-- Curve that makes the percent APIs return 0-100 instead of 0-1 (nil when missing).
+local function ScaleTo100()
+    local curves = S.Table(CurveConstants)
+    return curves and curves.ScaleTo100
+end
+
+-- Calls a percent API (UnitHealthPercent/UnitPowerPercent). Returns a clean number
+-- (0-100), a secret value (0-100) or nil. The result may be secret on purpose.
+local function PercentCall(fn, ...)
+    if type(fn) ~= "function" then return nil end
+    local curve = ScaleTo100()
+    if curve ~= nil then
+        local args = { ... }
+        args[#args + 1] = curve
+        local value = S.Call(fn, unpack(args))
+        if value == nil then return nil end
+        if S.IsSecret(value) then return value end
+        return type(value) == "number" and value or nil
+    end
+    -- Without the curve the API returns 0-1; scaling needs a clean value.
+    local value = S.Number(S.Call(fn, ...))
+    return value and value * 100 or nil
+end
+
+local function Graded(current, max, percentFn, ...)
+    if current and max then
+        if max <= 0 then return nil end
+        return "exact", current, max
+    end
+    if max and max <= 0 then return nil end
+    local percent = PercentCall(percentFn, ...)
+    if percent == nil then return nil end
+    if S.IsSecret(percent) then return "secret", percent end
+    return "percent", percent
+end
+
+-- Raw result of UnitHealthPercent (0-100; may be secret), for diagnostics.
+function Units.HealthPercentRaw(unit)
+    return PercentCall(UnitHealthPercent, unit, false)
+end
+
+-- Raw result of UnitPowerPercent (0-100; may be secret), for diagnostics.
+function Units.PowerPercentRaw(unit, powerType)
+    return PercentCall(UnitPowerPercent, unit, powerType, false)
+end
+
+-- Health of unit as grade, value(s); see above.
+function Units.Health(unit)
+    local current = S.Number(S.CallClean(UnitHealth, unit))
+    local max = S.Number(S.CallClean(UnitHealthMax, unit))
+    return Graded(current, max, UnitHealthPercent, unit, false)
+end
+
+-- Global string key of a power type from Enum.PowerType, for example "RunicPower" ->
+-- "RUNIC_POWER"; used when UnitPowerType returns no token.
+local function PowerTokenFromEnum(powerType)
+    local types = S.Table(Enum) and S.Table(Enum.PowerType)
+    if not types then return nil end
+    for name, value in pairs(types) do
+        if value == powerType and type(name) == "string" then
+            return (name:gsub("(%l)(%u)", "%1_%2")):upper()
+        end
+    end
+    return nil
+end
+
+-- Main power type of unit: number, token ("MANA") and the localized name from Blizzard's
+-- global strings (MANA, RAGE, ENERGY, FOCUS, ...). nil when unknown.
+function Units.PowerType(unit)
+    local powerType, token = S.Call(UnitPowerType, unit)
+    powerType, token = S.Number(powerType), S.String(token)
+    if not powerType then return nil end
+    token = token or PowerTokenFromEnum(powerType)
+    local name = token and S.String(_G[token])
+    return powerType, token, name
+end
+
+-- Main resource of unit: grade, value(s), localized name; see above. nil when the unit
+-- has no resource, its maximum is 0 or its name is unknown.
+function Units.Power(unit)
+    local powerType, _, name = Units.PowerType(unit)
+    if not powerType or not name or name == "" then return nil end
+    local current = S.Number(S.CallClean(UnitPower, unit, powerType))
+    local max = S.Number(S.CallClean(UnitPowerMax, unit, powerType))
+    local grade, a, b = Graded(current, max, UnitPowerPercent, unit, powerType, false)
+    if not grade then return nil end
+    return grade, a, b, name
+end
+
+---------------------------------------------------------------------------
 -- Tooltip line access
 ---------------------------------------------------------------------------
 

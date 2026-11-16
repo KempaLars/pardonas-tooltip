@@ -1,9 +1,10 @@
--- Pardona's ToolTips - average item level of players.
+-- Pardona's ToolTips - average item level of players and the shared inspect queue.
 --
 -- Own character: computed directly from the equipped items.
 -- Other players: one inspect request at a time, only out of combat, only when
 -- CanInspect allows it and the player is in inspect range, at most one request every
--- 1.5 s. Results are cached per GUID for 10 minutes. ClearInspectPlayer is only
+-- 1.5 s. One request serves both the item level and the spec (Units/Spec.lua); the
+-- result { level, spec } is cached per GUID for 10 minutes. ClearInspectPlayer is only
 -- called for requests this addon made, so other addons and the inspect window are
 -- not disturbed.
 --
@@ -13,6 +14,7 @@
 local _, ns = ...
 local S = ns.Secret
 local Units = ns.Units
+local Spec = ns.Spec
 
 local ItemLevel = {}
 ns.ItemLevel = ItemLevel
@@ -27,10 +29,10 @@ local CACHE_SECONDS    = 600   -- keep results for 10 minutes
 local RETRY_DELAY      = 0.5   -- item data of inspected players may arrive late
 local MAX_RETRIES      = 3
 
-local cache = {}            -- guid -> { level = number, time = GetTime() }
+local cache = {}            -- guid -> { level = number|nil, spec = string|nil, time = GetTime() }
 local lastRequest = -math.huge
 local pending               -- { guid, unit, time } of our open request
-local listeners = {}        -- fn(guid, level), called when a new result is cached
+local listeners = {}        -- fn(guid, entry), called when a new result is cached
 
 ---------------------------------------------------------------------------
 -- Calculation
@@ -76,6 +78,8 @@ end
 ---------------------------------------------------------------------------
 -- Cache
 ---------------------------------------------------------------------------
+
+-- Cached inspect result { level, spec } of guid (either field may be nil), or nil.
 function ItemLevel.Cached(guid)
     if not guid then return nil end
     local entry = cache[guid]
@@ -84,18 +88,19 @@ function ItemLevel.Cached(guid)
         cache[guid] = nil
         return nil
     end
-    return entry.level
+    return entry
 end
 
--- fn(guid, level) is called whenever a new inspect result is cached.
+-- fn(guid, entry) is called whenever a new inspect result is cached.
 function ItemLevel.OnResult(fn)
     listeners[#listeners + 1] = fn
 end
 
-local function Store(guid, level)
-    cache[guid] = { level = level, time = GetTime() }
+local function Store(guid, level, spec)
+    local entry = { level = level, spec = spec, time = GetTime() }
+    cache[guid] = entry
     for i = 1, #listeners do
-        local ok, err = pcall(listeners[i], guid, level)
+        local ok, err = pcall(listeners[i], guid, entry)
         if not ok then
             local handler = geterrorhandler and geterrorhandler()
             if handler then handler(err) end
@@ -123,7 +128,7 @@ local function CanRequest(unit)
     return true
 end
 
--- Requests the item level of another player if allowed. The result arrives later
+-- Requests item level and spec of another player if allowed. The result arrives later
 -- through the listeners registered with ItemLevel.OnResult.
 function ItemLevel.Request(unit, guid)
     if not unit or not guid or ItemLevel.Cached(guid) then return end
@@ -160,14 +165,17 @@ local function Evaluate(guid, attempt)
         Finish()
         return
     end
+    -- Both are read while the inspect data of our request is present (before Finish).
     local level = ItemLevel.Compute(unit)
+    local spec = Spec.Text(true)
     if level then
         Finish()
-        Store(guid, level)
+        Store(guid, level, spec)
     elseif attempt < MAX_RETRIES then
         C_Timer.After(RETRY_DELAY, function() Evaluate(guid, attempt + 1) end)
     else
         Finish()
+        if spec then Store(guid, nil, spec) end
     end
 end
 

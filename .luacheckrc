@@ -28,7 +28,9 @@ globals = {
 -- Deliberately read through _G and therefore not listed: issecretvalue and
 -- canaccesstable (only on clients with secret values), LibStub (only present when
 -- another addon ships it), InspectFrame (load-on-demand Blizzard UI), TSM_API (optional
--- TradeSkillMaster) and GetNumSkillLines/GetSkillLineInfo (older skill API fallback).
+-- TradeSkillMaster), GetNumSkillLines/GetSkillLineInfo (older skill API fallback),
+-- GetNumTalentTabs/GetTalentTabInfo (Classic talent tab API, may be missing on WoW
+-- Forever) and the power type names (global strings such as MANA, looked up by token).
 read_globals = {
     -- Frames and font objects
     "GameTooltip",
@@ -44,11 +46,14 @@ read_globals = {
     -- Namespaces and enums
     "C_ClassColor",
     "C_Item",
+    "C_Secrets",
     "C_SkillInfo",
     "C_Spell",
     "C_Timer",
     "C_TooltipComparison",
     "C_TooltipInfo",
+    "C_Traits",
+    "CurveConstants",
     "Enum",
     "ItemLocation",
     "TooltipDataProcessor",
@@ -97,11 +102,13 @@ read_globals = {
     "UnitGUID",
     "UnitHealth",
     "UnitHealthMax",
+    "UnitHealthPercent",
     "UnitIsPlayer",
     "UnitIsUnit",
     "UnitName",
     "UnitPower",
     "UnitPowerMax",
+    "UnitPowerPercent",
     "UnitPowerType",
     "UnitReaction",
 

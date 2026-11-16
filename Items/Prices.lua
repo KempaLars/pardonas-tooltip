@@ -45,6 +45,19 @@ function Prices.Value(source, itemString)
     return value
 end
 
+-- Non-money key figure of a TSM source (for example DBRegionSaleRate), or nil.
+--
+-- TSM rounds every custom price result to a whole number, so a sale rate of 0.737 would
+-- come back as 1. The source is therefore requested as an expression scaled by `scale`
+-- (TSM's own tooltip does the same with "DBRegionSaleRate * 1000"). "+ 1" keeps a real 0
+-- apart from "no data": TSM returns nil for a result of 0, and a missing source makes
+-- the whole expression invalid (nil), so 0 arrives as 1 and missing data stays nil.
+function Prices.Metric(source, scale, itemString)
+    local value = Prices.Value(("%s * %d + 1"):format(source, scale), itemString)
+    if not value then return nil end
+    return (value - 1) / scale
+end
+
 ---------------------------------------------------------------------------
 -- Money
 ---------------------------------------------------------------------------

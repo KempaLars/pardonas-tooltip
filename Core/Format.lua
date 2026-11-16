@@ -38,6 +38,16 @@ function Format.Percent(p)
     return L.PERCENT_FORMAT:format(floor(p + 0.5))
 end
 
+-- Percentage text for a secret value (0-100). The game lets string.format turn a secret
+-- number into a secret string that only its widgets can show (SetText). Returns nil when
+-- that is not possible; the caller then leaves the text out. The result must never be
+-- compared, measured or concatenated.
+function Format.SecretPercent(value)
+    local ok, text = pcall(string.format, L.PERCENT_SECRET_FORMAT, value)
+    if not ok then return nil end
+    return text
+end
+
 -- Chance in percent: whole numbers like Percent, otherwise one decimal ("99.5%").
 function Format.Chance(p)
     if p == floor(p) then return Format.Percent(p) end

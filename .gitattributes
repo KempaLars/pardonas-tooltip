@@ -1,0 +1,2 @@
+# Textures are binary: never convert line endings.
+*.tga binary

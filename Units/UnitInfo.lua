@@ -3,7 +3,10 @@
 -- Blizzard lines are kept. Existing lines are only recolored (when their text is not
 -- secret); our own lines are appended at the bottom with AddLine/AddDoubleLine in this
 -- order: classification (only if the level line could not be used), target, speed,
--- mana, item level. Every line whose values are secret is left out silently.
+-- resource, item level, spec. Every line whose values are secret is left out silently.
+--
+-- The unit's GUID is optional. Without it everything that needs no cache still works;
+-- item level and spec of other players (cached per GUID) are then skipped.
 
 local _, ns = ...
 local L = ns.L
@@ -13,6 +16,7 @@ local Format = ns.Format
 local ColorSets = ns.ColorSets
 local HealthText = ns.HealthText
 local ItemLevel = ns.ItemLevel
+local Spec = ns.Spec
 
 local UnitInfo = {}
 ns.UnitInfo = UnitInfo
@@ -29,7 +33,7 @@ local CLASSIFICATIONS = {
 }
 
 -- State of the unit GameTooltip currently shows (nil when none).
--- { unit, guid, speedLine, itemLevelShown }
+-- { unit, guid (may be nil), speedLine, itemLevelShown, specShown }
 local current
 
 ---------------------------------------------------------------------------
@@ -42,11 +46,6 @@ local function SetLineColor(fontString, color)
     if fontString and color then
         S.Method(fontString, "SetTextColor", color[1], color[2], color[3])
     end
-end
-
-local function ManaPowerType()
-    local types = S.Table(Enum) and S.Table(Enum.PowerType)
-    return (types and S.Number(S.Field(types, "Mana"))) or 0
 end
 
 local function SpeedText(unit)
@@ -170,28 +169,45 @@ local function AddSpeed(tooltip, unit)
     return AddPair(tooltip, L.LINE_SPEED, text)
 end
 
-local function AddMana(tooltip, unit)
-    local mana = ManaPowerType()
-    local powerType = S.Number(S.CallClean(UnitPowerType, unit))
-    if powerType ~= mana then return end
-    local value = S.Number(S.CallClean(UnitPower, unit, mana))
-    local maxValue = S.Number(S.CallClean(UnitPowerMax, unit, mana))
-    if not value or not maxValue or maxValue <= 0 then return end
-    AddPair(tooltip, L.LINE_MANA, Format.Ratio(value, maxValue))
+-- Main resource with its localized name: "Energy: 100 / 100" or "Mana: 80%".
+-- A secret percentage is left out: our line lives in a Blizzard tooltip line, and a
+-- secret text there would make the line unreadable for other code.
+local function AddResource(tooltip, unit)
+    local grade, a, b, name = Units.Power(unit)
+    local value
+    if grade == "exact" then
+        value = Format.Ratio(a, b)
+    elseif grade == "percent" then
+        value = Format.Percent(a)
+    end
+    if not value then return end
+    AddPair(tooltip, L.LINE_RESOURCE:format(name), value)
 end
 
-local function AddItemLevel(tooltip, unit, guid)
+-- Item level and spec: own character directly, other players from the inspect cache
+-- (a request is made when nothing is cached). Sets current.itemLevelShown/specShown.
+local function AddInspectLines(tooltip, unit, guid, db)
     local isSelf = Units.IsSelf(unit)
-    local level
+    local level, spec
     if isSelf == true then
-        level = ItemLevel.Compute("player")
-    elseif isSelf == false then
-        level = ItemLevel.Cached(guid)
-        if not level then ItemLevel.Request(unit, guid) end
+        if db.unitItemLevel then level = ItemLevel.Compute("player") end
+        if db.unitSpec then spec = Spec.Text(false) end
+    elseif isSelf == false and guid then
+        local entry = ItemLevel.Cached(guid)
+        if entry then
+            level, spec = entry.level, entry.spec
+        else
+            ItemLevel.Request(unit, guid)
+        end
     end
-    if not level then return false end
-    AddPair(tooltip, L.LINE_ITEM_LEVEL, Format.Decimal(level, 1))
-    return true
+    if db.unitItemLevel and level then
+        AddPair(tooltip, L.LINE_ITEM_LEVEL, Format.Decimal(level, 1))
+        current.itemLevelShown = true
+    end
+    if db.unitSpec and spec then
+        AddPair(tooltip, L.LINE_SPEC, spec)
+        current.specShown = true
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -205,8 +221,11 @@ local function StopTicker()
     ticker:Hide()
 end
 
+-- True while GameTooltip still shows the unit in `current`. Without a readable GUID
+-- the tooltip's OnHide and the next unit tooltip reset `current`.
 local function SameUnitStillShown()
     if not current or S.Method(GameTooltip, "IsShown") ~= true then return false end
+    if not current.guid then return true end
     return Units.GUID(current.unit) == current.guid
 end
 
@@ -253,12 +272,11 @@ local function OnUnitTooltip(tooltip, data)
     current = nil
 
     local unit = Units.Resolve(tooltip, data)
-    local guid = unit and Units.GUID(unit)
-    if not unit or not guid then
+    if not unit then
         HealthText.SetUnit(nil)
         return
     end
-    current = { unit = unit, guid = guid }
+    current = { unit = unit, guid = Units.GUID(unit) }
     HealthText.SetUnit(unit)
 
     local isPlayer = Units.IsPlayer(unit)
@@ -275,21 +293,29 @@ local function OnUnitTooltip(tooltip, data)
         current.speedLine = AddSpeed(tooltip, unit)
         if current.speedLine then StartTicker() end
     end
-    if db.unitMana then AddMana(tooltip, unit) end
-    if isPlayer == true and db.unitItemLevel then
-        current.itemLevelShown = AddItemLevel(tooltip, unit, guid)
+    if db.unitMana then AddResource(tooltip, unit) end
+    if isPlayer == true and (db.unitItemLevel or db.unitSpec) then
+        AddInspectLines(tooltip, unit, current.guid, db)
     end
 end
 
--- A late inspect result: add the line if the tooltip still shows that player.
-local function OnItemLevelResult(guid, level)
+-- A late inspect result: add the missing lines if the tooltip still shows that player.
+local function OnInspectResult(guid, entry)
     local db = ns.db
-    if not db or not db.unitItemLevel then return end
-    if not current or current.guid ~= guid or current.itemLevelShown then return end
+    if not db or not current or not current.guid or current.guid ~= guid then return end
     if not SameUnitStillShown() then return end
-    AddPair(GameTooltip, L.LINE_ITEM_LEVEL, Format.Decimal(level, 1))
-    current.itemLevelShown = true
-    S.Method(GameTooltip, "Show")
+    local added = false
+    if db.unitItemLevel and entry.level and not current.itemLevelShown then
+        AddPair(GameTooltip, L.LINE_ITEM_LEVEL, Format.Decimal(entry.level, 1))
+        current.itemLevelShown = true
+        added = true
+    end
+    if db.unitSpec and entry.spec and not current.specShown then
+        AddPair(GameTooltip, L.LINE_SPEC, entry.spec)
+        current.specShown = true
+        added = true
+    end
+    if added then S.Method(GameTooltip, "Show") end
 end
 
 local function OnTooltipHide()
@@ -314,5 +340,5 @@ ns.OnLoad(function()
     if S.FrameUsable(GameTooltip) then
         pcall(GameTooltip.HookScript, GameTooltip, "OnHide", OnTooltipHide)
     end
-    ItemLevel.OnResult(OnItemLevelResult)
+    ItemLevel.OnResult(OnInspectResult)
 end)

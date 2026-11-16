@@ -2,7 +2,7 @@
 
 A tooltip addon for **World of Warcraft: Forever** (Interface 16001, Mainline client with the Midnight API).
 
-> **Beta** – this addon is in an early stage. The current version covers the tooltip appearance, player and mob information, item level, gear comparison and disenchant/price information. Please report problems in the GitHub issues.
+> **Beta** – this addon is in an early stage. The current version covers the tooltip appearance, player and mob information (including spec), item level, gear comparison and disenchant/price information. Please report problems in the GitHub issues.
 
 ## Features (current state)
 
@@ -37,11 +37,17 @@ added at the bottom.
 - **Mobs**: classification appended to the level line – *(Elite)*, *(Rare)*,
   *(Rare Elite)* or *(Boss)*. Normal mobs get nothing.
 - **Health text** on the health bar below the tooltip, for example `1,234 / 2,000 (62%)`
-  (number format follows the client language).
+  (number format follows the client language). The game does not reveal the exact health
+  of every unit (for example players outside your group); then only the percentage is
+  shown, for example `62%`. If even the percentage is hidden from addons, the game may still
+  let the addon pass it on for display; otherwise the text is left out.
 - **Target** of the unit in class or reaction color, or `>> YOU <<` if it targets you.
 - **Speed**: current movement speed in percent of normal run speed, updated live while the
   tooltip shows the unit.
-- **Mana**: current and maximum mana when mana is the unit's main resource (no rage or energy).
+- **Resource**: the unit's main resource with its name in your language, for example
+  `Mana: 1,815 / 2,000`, `Energy: 100 / 100` or `Rage: 0 / 100`. If only the percentage is
+  readable: `Mana: 80%`. Units without a resource (maximum 0) get no line, and neither do
+  units whose values are hidden completely.
 - **Item level** (players): average item level with one decimal. Your own character is
   calculated directly. Other players are inspected only out of combat, only when they can
   be inspected and are in range, at most one request every 1.5 seconds; results are kept
@@ -49,6 +55,12 @@ added at the bottom.
   is added. Inspect requests of other addons are not disturbed.
   The average covers the equipped slots except shirt and tabard (17 slots including the
   ranged slot); a two-handed weapon with an empty off-hand counts twice.
+- **Spec** (players): the talent tree with the most points and the points of all trees, for
+  example `Spec: Arms (31/20/0)`; on a tie both names, for example `Arms/Fury (20/20/11)`.
+  No line without spent points. Your own character is read directly, other players with the
+  same inspect request as the item level (same rules and cache). The line needs the game's
+  talent tree functions; if the client does not offer them, it is not shown (`/ptt debug`
+  tells whether they are available).
 
 ### Items
 
@@ -88,8 +100,10 @@ a block above the comparison shows:
   whichever earns the most, for example `Recommendation: Disenchant (≈ 11s 52c)`.
   - Vendor: TSM `VendorSell` (or the game's sell price).
   - Auction house: TSM `DBMarket` (or `DBMinBuyout`) minus the auction house fee. Items with a
-    low region sale rate or few sales per day count as slow sellers; their auction value is
-    ignored and `(AH: slow seller)` is shown.
+    low region sale rate (`DBRegionSaleRate`) or few sales per day (`DBRegionSoldPerDay`)
+    count as slow sellers; their auction value is ignored and `(AH: slow seller)` is shown.
+    Both figures are read with their decimals (for example a sale rate of 0.737), the same
+    values TSM shows in its own tooltip.
   - Disenchant: TSM `Destroy` minus the auction house fee; only counted if you can disenchant
     the item yourself (Enchanting learned and skill high enough) or the item is not bound
     (you can send it to an alt).
@@ -137,9 +151,27 @@ include or change them, it only reads TradeSkillMaster's public API.
 | --- | --- |
 | `/ptt` or `/pardonastooltips` | Open the options |
 | `/ptt reset` | Reset all settings to their defaults |
+| `/ptt debug` | Show what the game lets the addon read (see Troubleshooting) |
 | `/ptt help` | List the commands |
 
 If `/ptt` is used during combat, the options open as soon as combat ends.
+
+## Troubleshooting
+
+If a line is missing (for example the health text or the resource of another player), type
+`/ptt debug`. The addon then prints to the chat what the game lets it read, for your character,
+your mouseover unit, your target and – in a group – the first party member:
+
+- whether the unit exists, its name and whether its GUID is readable,
+- health and maximum health, and the health percentage,
+- the resource type with its name, current and maximum value, and the resource percentage,
+- whether the game's functions for hidden values (`issecretvalue`, `C_Secrets`, percent
+  functions) exist, and the `C_Secrets` checks for units,
+- whether the talent tree functions exist and your own spec.
+
+Every value is shown as it is, as `secret` (the game hides it from addons) or as `nil`
+(no value). Hover a unit with the mouse and type the command into the chat to include it.
+Please add this output when you report a problem.
 
 ## Options
 
@@ -168,8 +200,9 @@ Open with `/ptt` or via *Options → AddOns → Pardona's ToolTips*.
 | Health text | On |
 | Target | On |
 | Speed | On |
-| Mana | On |
+| Resource (mana, rage, energy …) | On |
 | Item level (players) | On |
+| Spec (players) | On |
 | Classification (mobs) | On |
 
 **Items**

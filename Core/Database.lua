@@ -27,8 +27,9 @@ ns.DEFAULTS = {
     unitHealthText     = true,
     unitTarget         = true,
     unitSpeed          = true,
-    unitMana           = true,
+    unitMana           = true,  -- main resource line (name kept for saved settings)
     unitItemLevel      = true,
+    unitSpec           = true,
     unitClassification = true,
     -- Items (added without migration: missing fields get defaults)
     itemLevel          = true,

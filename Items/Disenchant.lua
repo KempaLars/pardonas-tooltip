@@ -28,6 +28,8 @@ local QUALITY_KEYS = { [2] = "uncommon", [3] = "rare", [4] = "epic" }
 local SEPARATOR = " · "
 local WRAP_LENGTH = 42      -- characters of plain text per line before wrapping
 local INDENT = "  "
+local SALE_RATE_SCALE = 1000    -- DBRegionSaleRate is a fraction (0.737)
+local SOLD_PER_DAY_SCALE = 100  -- DBRegionSoldPerDay has decimals (0.42)
 
 ---------------------------------------------------------------------------
 -- Data lookup
@@ -178,8 +180,9 @@ local function Recommend(link, sellPrice, disenchantAllowed)
     if not vendor and sellPrice and sellPrice > 0 then vendor = sellPrice end
 
     local market = Prices.Value("DBMarket", itemString) or Prices.Value("DBMinBuyout", itemString)
-    local saleRate = Prices.Value("DBRegionSaleRate", itemString)
-    local soldPerDay = Prices.Value("DBRegionSoldPerDay", itemString)
+    -- Key figures are requested scaled, because TSM rounds results to whole numbers.
+    local saleRate = Prices.Metric("DBRegionSaleRate", SALE_RATE_SCALE, itemString)
+    local soldPerDay = Prices.Metric("DBRegionSoldPerDay", SOLD_PER_DAY_SCALE, itemString)
     local slow = (saleRate ~= nil and saleRate < db.minSaleRate)
         or (soldPerDay ~= nil and soldPerDay < db.minSoldPerDay)
     local auction = (market and market > 0 and not slow) and market * afterFee or nil
