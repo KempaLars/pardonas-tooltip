@@ -1,12 +1,13 @@
 ## Interface: 16001
 ## Title: Pardona's ToolTips
-## Notes: Tooltip appearance, player and mob info, item level and an always visible gear comparison.
-## Notes-deDE: Tooltip-Aussehen, Spieler- und Mob-Infos, Itemlevel und ein ständig sichtbarer Ausrüstungsvergleich.
+## Notes: Tooltip appearance, player and mob info, item level, gear comparison, disenchant chances and TSM-based sell recommendation.
+## Notes-deDE: Tooltip-Aussehen, Spieler- und Mob-Infos, Itemlevel, Ausrüstungsvergleich, Entzauberungs-Chancen und Verkaufsempfehlung mit TSM.
 ## Author: Pardona
 ## Version: @project-version@
 ## SavedVariables: PardonasToolTipsDB
 ## X-License: GPL-3.0
 ## X-Curse-Project-ID: 1810747
+## OptionalDeps: TradeSkillMaster
 
 Locales\enUS.lua
 Locales\deDE.lua
@@ -25,8 +26,13 @@ Units\HealthText.lua
 Units\ItemLevel.lua
 Units\UnitInfo.lua
 
+Data\Disenchant.lua
+
 Items\Items.lua
 Items\Wearable.lua
+Items\Professions.lua
+Items\Prices.lua
+Items\Disenchant.lua
 Items\Compare.lua
 Items\ItemInfo.lua
 

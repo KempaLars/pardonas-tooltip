@@ -27,7 +27,8 @@ globals = {
 -- WoW API, Blizzard frames, constants and mixins the addon reads.
 -- Deliberately read through _G and therefore not listed: issecretvalue and
 -- canaccesstable (only on clients with secret values), LibStub (only present when
--- another addon ships it) and InspectFrame (load-on-demand Blizzard UI).
+-- another addon ships it), InspectFrame (load-on-demand Blizzard UI), TSM_API (optional
+-- TradeSkillMaster) and GetNumSkillLines/GetSkillLineInfo (older skill API fallback).
 read_globals = {
     -- Frames and font objects
     "GameTooltip",
@@ -43,6 +44,8 @@ read_globals = {
     -- Namespaces and enums
     "C_ClassColor",
     "C_Item",
+    "C_SkillInfo",
+    "C_Spell",
     "C_Timer",
     "C_TooltipComparison",
     "C_TooltipInfo",

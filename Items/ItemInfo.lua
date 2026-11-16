@@ -88,6 +88,11 @@ local function OnItemTooltip(tooltip, data)
         end
     end
 
+    -- Disenchant and price block sits above the comparison.
+    if wantsCompare then
+        ns.Disenchant.Add(tooltip, link, data)
+    end
+
     if wantsCompare and CompareWanted() then
         ns.Compare.Add(tooltip, link, data)
     end

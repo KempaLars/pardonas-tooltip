@@ -38,6 +38,12 @@ function Format.Percent(p)
     return L.PERCENT_FORMAT:format(floor(p + 0.5))
 end
 
+-- Chance in percent: whole numbers like Percent, otherwise one decimal ("99.5%").
+function Format.Chance(p)
+    if p == floor(p) then return Format.Percent(p) end
+    return L.PERCENT_DECIMAL_FORMAT:format(Format.Decimal(p, 1))
+end
+
 -- "current / max" with thousands separators.
 function Format.Ratio(current, max)
     return L.RATIO_FORMAT:format(Format.Number(current), Format.Number(max))

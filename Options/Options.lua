@@ -130,6 +130,14 @@ local function FormatPoints(value)
     return ("%d"):format(value)
 end
 
+local function FormatTwoDecimals(value)
+    return ns.Format.Decimal(value, 2)
+end
+
+local function FormatOneDecimal(value)
+    return ns.Format.Decimal(value, 1)
+end
+
 ---------------------------------------------------------------------------
 -- Reset
 ---------------------------------------------------------------------------
@@ -181,6 +189,16 @@ local function Build()
     AddCheckbox("itemLevel", L.OPT_ITEM_LEVEL_ITEMS, L.OPT_ITEM_LEVEL_ITEMS_TT)
     AddDropdown("itemCompare", L.OPT_COMPARE, L.OPT_COMPARE_TT, CompareEntries)
     AddCheckbox("itemHideAppearance", L.OPT_HIDE_APPEARANCE, L.OPT_HIDE_APPEARANCE_TT)
+
+    AddHeader(L.SECTION_PRICES)
+    -- TradeSkillMaster is an optional dependency and therefore loaded before us.
+    if not ns.Prices.Available() then AddHeader(L.TSM_MISSING) end
+    AddCheckbox("deChances", L.OPT_DE_CHANCES, L.OPT_DE_CHANCES_TT)
+    AddCheckbox("deValue", L.OPT_DE_VALUE, L.OPT_DE_VALUE_TT)
+    AddCheckbox("deRecommend", L.OPT_RECOMMEND, L.OPT_RECOMMEND_TT)
+    AddSlider("ahFee", L.OPT_AH_FEE, L.OPT_AH_FEE_TT, FormatPercent)
+    AddSlider("minSaleRate", L.OPT_MIN_SALE_RATE, L.OPT_MIN_SALE_RATE_TT, FormatTwoDecimals)
+    AddSlider("minSoldPerDay", L.OPT_MIN_SOLD, L.OPT_MIN_SOLD_TT, FormatOneDecimal)
 
     AddHeader(L.SECTION_GENERAL)
     AddButton(L.RESET, L.RESET_BUTTON, Options.ResetAll, L.RESET_TT)

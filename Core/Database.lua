@@ -34,6 +34,13 @@ ns.DEFAULTS = {
     itemLevel          = true,
     itemCompare        = "always", -- "always", "shift" or "off"
     itemHideAppearance = true,
+    -- Prices & disenchanting (added without migration: missing fields get defaults)
+    deChances          = true,
+    deValue            = true,
+    deRecommend        = true,
+    ahFee              = 5,     -- percent
+    minSaleRate        = 0.10,
+    minSoldPerDay      = 0.5,
 }
 
 -- Valid ranges for numeric settings: { min, max, step }.
@@ -42,6 +49,9 @@ ns.LIMITS = {
     scale          = { 50, 200, 5 },
     fontSizeHeader = { 8, 30, 1 },
     fontSizeText   = { 6, 24, 1 },
+    ahFee          = { 0, 20, 1 },
+    minSaleRate    = { 0, 1, 0.01 },
+    minSoldPerDay  = { 0, 20, 0.1 },
 }
 
 -- migrations[n] upgrades a database of version n - 1 to version n.

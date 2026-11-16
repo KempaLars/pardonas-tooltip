@@ -2,7 +2,7 @@
 
 A tooltip addon for **World of Warcraft: Forever** (Interface 16001, Mainline client with the Midnight API).
 
-> **Beta** – this addon is in an early stage. The current version covers the tooltip appearance, player and mob information, item level and gear comparison. Please report problems in the GitHub issues.
+> **Beta** – this addon is in an early stage. The current version covers the tooltip appearance, player and mob information, item level, gear comparison and disenchant/price information. Please report problems in the GitHub issues.
 
 ## Features (current state)
 
@@ -74,6 +74,35 @@ added at the bottom.
   is removed before it is drawn, without leaving a gap.
 - Lines of other addons (for example TradeSkillMaster or ArkInventory) are not changed.
 
+### Prices and disenchanting
+
+For disenchantable items – uncommon (green), rare (blue) and epic (purple) weapons and armor –
+a block above the comparison shows:
+
+- **Disenchant**: possible materials with chance and quantity, for example
+  `75% Soul Dust (1–2) · 20% Greater Astral Essence (1–2) · 5% Large Glimmering Shard`.
+  Long lists wrap onto indented lines. If you know Enchanting but your skill is too low,
+  `(Enchanting 150 required)` is added. Material names come from the game in your language.
+- **Disenchant value** (needs TradeSkillMaster): TSM's price source `Destroy`.
+- **Recommendation** (needs TradeSkillMaster): *Vendor*, *Auction house* or *Disenchant*,
+  whichever earns the most, for example `Recommendation: Disenchant (≈ 11s 52c)`.
+  - Vendor: TSM `VendorSell` (or the game's sell price).
+  - Auction house: TSM `DBMarket` (or `DBMinBuyout`) minus the auction house fee. Items with a
+    low region sale rate or few sales per day count as slow sellers; their auction value is
+    ignored and `(AH: slow seller)` is shown.
+  - Disenchant: TSM `Destroy` minus the auction house fee; only counted if you can disenchant
+    the item yourself (Enchanting learned and skill high enough) or the item is not bound
+    (you can send it to an alt).
+
+When the block is shown: items that are not soulbound always get it; soulbound items only if
+your character has learned Enchanting. Chat links and vendor items count as not bound unless
+they bind when picked up.
+
+The disenchanting table (Classic item levels) was built from the public tables on
+[warcraft.wiki.gg: Disenchanting tables](https://warcraft.wiki.gg/wiki/Disenchanting_tables)
+and [warcraft.wiki.gg: Disenchanting](https://warcraft.wiki.gg/wiki/Disenchanting)
+(required skill), see `Data/Disenchant.lua`.
+
 ### General
 
 - All changes take effect immediately, without `/reload`.
@@ -89,6 +118,18 @@ in combat or restricted content no inspect requests are made.
 2. Extract the `PardonasToolTips` folder into
    `World of Warcraft\_forever_\Interface\AddOns\`.
 3. Restart the game or type `/reload`.
+
+## Optional addons
+
+Pardona's ToolTips works on its own. These addons add features when they are installed:
+
+| Addon | Adds |
+| --- | --- |
+| TradeSkillMaster | Prices, disenchant value and the sell recommendation |
+| AtlasLoot Forever | Needed for the full item source feature (dungeon and raid boss loot, planned) |
+
+Without them everything else works; only these parts are missing. The addon does not
+include or change them, it only reads TradeSkillMaster's public API.
 
 ## Slash commands
 
@@ -142,15 +183,28 @@ Open with `/ptt` or via *Options → AddOns → Pardona's ToolTips*.
 With *Only with Shift* the comparison appears and disappears as soon as Shift is pressed or
 released.
 
+**Prices & Disenchanting**
+
+| Option | Default |
+| --- | --- |
+| Show disenchant chances | On |
+| Show disenchant value | On |
+| Show recommendation | On |
+| Auction house fee | 5 % (0–20) |
+| Slow seller: minimum sale rate | 0.10 (0.00–1.00) |
+| Slow seller: minimum sold per day | 0.5 (0–20) |
+
+If TradeSkillMaster is not loaded, the section says so; prices and the recommendation are
+then disabled, the disenchant chances still work.
+
 **General**
 
 - *Reset settings* – restores all defaults.
 
 ## Planned
 
-- Prices and disenchanting values with TradeSkillMaster
-- Item sources
-- Vendor recipes
+- Item sources (dungeon and raid boss loot with AtlasLoot Forever)
+- Vendors and recipes
 
 ## License
 
