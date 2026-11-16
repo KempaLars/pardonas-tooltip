@@ -1,0 +1,51 @@
+name: Release
+
+# Releases are created only by pushing a tag such as 0.1.0 or 0.1.0-beta1.
+# The packager marks tags containing "beta" as beta (GitHub: pre-release) and
+# tags containing "alpha" as alpha.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Luacheck
+        uses: lunarmodules/luacheck@v1
+        with:
+          args: "."
+
+  release:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    env:
+      # CurseForge upload only happens when the TOC has an X-Curse-Project-ID and this
+      # secret is set. Without either, the packager skips CurseForge and releases to
+      # GitHub only.
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
+        with:
+          # File: PardonasToolTips-X.Y.Z.zip, CurseForge label: "X.Y.Z".
+          # The label is set explicitly because the default label
+          # "{project-version}{classic}{nolib}" would append "-forever".
+          args: >-
+            -n "{package-name}-{project-version}:{project-version}"

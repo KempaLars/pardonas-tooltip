@@ -1,0 +1,23 @@
+## Interface: 16001
+## Title: Pardona's ToolTips
+## Notes: Tooltip appearance and position: anchor, scale, fonts, color sets and colored borders.
+## Notes-deDE: Aussehen und Position der Tooltips: Anker, Skalierung, Schrift, Farb-Sets und eingefärbte Rahmen.
+## Author: Pardona
+## Version: @project-version@
+## SavedVariables: PardonasToolTipsDB
+## X-License: GPL-3.0
+
+Locales\enUS.lua
+Locales\deDE.lua
+
+Core\Init.lua
+Core\Secret.lua
+Core\Database.lua
+
+Appearance\ColorSets.lua
+Appearance\Fonts.lua
+Appearance\Appearance.lua
+
+Options\Options.lua
+
+Core\Commands.lua
