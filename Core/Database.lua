@@ -42,6 +42,9 @@ ns.DEFAULTS = {
     ahFee              = 5,     -- percent
     minSaleRate        = 0.10,
     minSoldPerDay      = 0.5,
+    -- Shared lib-pardona state (minimap button). The library owns the fields inside;
+    -- added without migration: a missing table gets a new empty one.
+    pardona            = {},
 }
 
 -- Valid ranges for numeric settings: { min, max, step }.
@@ -60,10 +63,18 @@ ns.LIMITS = {
 --   migrations[2] = function(db) db.newField = db.oldField; db.oldField = nil end
 local migrations = {}
 
+-- Table defaults are copied so the saved table never shares ns.DEFAULTS.
+local function CopyValue(value)
+    if type(value) ~= "table" then return value end
+    local copy = {}
+    for k, v in pairs(value) do copy[k] = CopyValue(v) end
+    return copy
+end
+
 local function CopyDefaults(db)
     for key, value in pairs(ns.DEFAULTS) do
         if db[key] == nil or type(db[key]) ~= type(value) then
-            db[key] = value
+            db[key] = CopyValue(value)
         end
     end
 end
@@ -95,11 +106,15 @@ function Database.Prepare(db)
 end
 
 -- Resets every setting to its default. The table identity is kept because the
--- options window holds a reference to it.
+-- options window holds a reference to it. The shared lib-pardona table is kept as well:
+-- the library holds a reference to it, and the minimap button is shared by all Pardona
+-- addons, so resetting this addon must not move or show it.
 function Database.Reset()
     local db = ns.db
     if not db then return end
+    local pardona = db.pardona
     wipe(db)
+    if type(pardona) == "table" then db.pardona = pardona end
     CopyDefaults(db)
 end
 

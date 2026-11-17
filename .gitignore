@@ -13,3 +13,6 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Embedded libraries (fetched by the packager or tools/fetch-libs.ps1)
+Libs/

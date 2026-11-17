@@ -12,6 +12,7 @@ L.HELP_HEADER       = "Befehle:"
 L.HELP_OPEN         = "/ptt – Optionen öffnen"
 L.HELP_RESET        = "/ptt reset – alle Einstellungen zurücksetzen"
 L.HELP_DEBUG        = "/ptt debug – zeigen, was das Spiel dem Addon zu lesen erlaubt (Fehlersuche)"
+L.HELP_MINIMAP      = "/ptt minimap – gemeinsamen Pardona-Minimap-Button ein- oder ausblenden"
 L.HELP_HELP         = "/ptt help – diese Liste anzeigen"
 
 -- /ptt debug
@@ -31,6 +32,12 @@ L.RESET_DONE        = "Alle Einstellungen wurden zurückgesetzt."
 L.UNKNOWN_COMMAND   = "Unbekannter Befehl „%s“. /ptt help zeigt alle Befehle."
 L.OPEN_AFTER_COMBAT = "Die Optionen öffnen sich nach dem Kampf."
 L.NO_SETTINGS_API   = "Das Optionsfenster ist in diesem Client nicht verfügbar."
+L.LIB_NOT_LOADED    = "Gemeinsame Bibliothek nicht geladen."
+
+-- Shared Pardona library (lib-pardona): settings page name and status
+L.SETTINGS_NAME     = "ToolTips"
+L.STATUS_ACTIVE     = "aktiv"
+L.STATUS_ACTIVE_NO_TSM = "aktiv (ohne TSM)"
 
 -- Options: sections
 L.SECTION_APPEARANCE = "Erscheinungsbild"
@@ -166,3 +173,5 @@ L.HEALTH_FORMAT       = "%s (%s)"
 L.RESET               = "Einstellungen zurücksetzen"
 L.RESET_BUTTON        = "Zurücksetzen"
 L.RESET_TT            = "Setzt alle Einstellungen von Pardona's ToolTips auf die Standardwerte zurück."
+L.OPT_MINIMAP           = "Minimap-Button anzeigen"
+L.OPT_MINIMAP_TT        = "Zeigt den gemeinsamen Minimap-Button von Pardona's Addons. Die Einstellung gilt für alle Pardona-Addons."

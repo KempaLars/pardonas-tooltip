@@ -148,6 +148,31 @@ Pardona's ToolTips works on its own. These addons add features when they are ins
 Without them everything else works; only these parts are missing. The addon does not
 include or change them, it only reads TradeSkillMaster's public API.
 
+## Pardona's Addons
+
+Pardona's ToolTips shares one entry point with the other Pardona addons (for example
+Pardona's Buff Reminder) through the embedded library lib-pardona:
+
+- **One minimap button** for all Pardona addons. It can be dragged along the minimap edge;
+  its position and visibility are shared by all Pardona addons and kept after `/reload`.
+  - Only ToolTips installed: left-click opens the ToolTips options directly.
+  - Several Pardona addons installed: left-click opens a small menu with one row per addon
+    and "Pardona settings"; right-click opens the overview.
+  - The tooltip of the button shows every addon with its status. ToolTips shows *active*,
+    or *active (no TSM)* when TradeSkillMaster is not loaded.
+- **Settings category "Pardona's Addons"** with an overview page (all Pardona addons, their
+  status and a *Show minimap button* checkbox) and the ToolTips page below it.
+- **Addon compartment** entry "Pardona's Addons" (if the client has the compartment).
+- **Titan Panel and other LibDataBroker displays:** a launcher "Pardona" with the addon
+  statuses as text. It only appears if LibDataBroker is already loaded by another addon
+  (for example Titan Panel); LibDataBroker is not included.
+- `/ptt minimap` or the *Show minimap button* option shows or hides the shared button. Hide
+  it there if you prefer the panel launcher.
+
+If the library is missing (for example a development checkout without `Libs/`), everything
+works as before: the options are a category of their own, there is no minimap button, and
+`/ptt minimap` only says that the shared library is not loaded.
+
 ## Slash commands
 
 | Command | Description |
@@ -155,6 +180,7 @@ include or change them, it only reads TradeSkillMaster's public API.
 | `/ptt` or `/pardonastooltips` | Open the options |
 | `/ptt reset` | Reset all settings to their defaults |
 | `/ptt debug` | Show what the game lets the addon read (see Troubleshooting) |
+| `/ptt minimap` | Show or hide the shared Pardona minimap button (needs lib-pardona, see Pardona's Addons) |
 | `/ptt help` | List the commands |
 
 If `/ptt` is used during combat, the options open as soon as combat ends.
@@ -180,7 +206,8 @@ Please add this output when you report a problem.
 
 ## Options
 
-Open with `/ptt` or via *Options → AddOns → Pardona's ToolTips*.
+Open with `/ptt`, via the Pardona minimap button or via *Options → AddOns → Pardona's Addons → ToolTips*.
+Without the shared library (see Pardona's Addons) the page is *Options → AddOns → Pardona's ToolTips*, as before.
 
 **Appearance**
 
@@ -237,12 +264,28 @@ then disabled, the disenchant chances still work.
 
 **General**
 
+- *Show minimap button* – shows or hides the shared Pardona minimap button (On; only with the
+  shared library). The setting applies to all Pardona addons and is not changed by *Reset settings*.
 - *Reset settings* – restores all defaults.
 
 ## Planned
 
 - Item sources (dungeon and raid boss loot with AtlasLoot Forever)
 - Vendors and recipes
+
+## Libraries
+
+Embedded when the addon is packaged (`.pkgmeta` externals, folder `Libs/lib-pardona`); they
+are not part of this repository:
+
+| Library | License |
+| --- | --- |
+| [lib-pardona](https://github.com/KempaLars/lib-pardona) (LibPardona-1.0) | MIT |
+| LibStub (shipped with lib-pardona) | Public Domain |
+
+For development, `tools\fetch-libs.ps1` copies the library into `Libs\lib-pardona` – from a
+sibling checkout `..\lib-pardona` if there is one, otherwise with `git clone --depth 1`.
+It can be run again at any time and replaces the folder completely.
 
 ## License
 

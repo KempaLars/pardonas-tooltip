@@ -2,6 +2,7 @@
 --   (no argument)  open the options
 --   reset          reset all settings
 --   debug          print what the game lets the addon read (diagnostics)
+--   minimap        show or hide the shared Pardona minimap button (lib-pardona)
 --   help           list the commands
 
 local _, ns = ...
@@ -12,6 +13,7 @@ local function PrintHelp()
     ns.Print(L.HELP_OPEN)
     ns.Print(L.HELP_RESET)
     ns.Print(L.HELP_DEBUG)
+    ns.Print(L.HELP_MINIMAP)
     ns.Print(L.HELP_HELP)
 end
 
@@ -26,6 +28,8 @@ SlashCmdList.PARDONASTOOLTIPS = function(msg)
         ns.Options.ResetAll()
     elseif command == "debug" then
         ns.Debug.Run()
+    elseif command == "minimap" then
+        if not ns.Pardona.ToggleMinimap() then ns.Print(L.LIB_NOT_LOADED) end
     elseif command == "help" then
         PrintHelp()
     else

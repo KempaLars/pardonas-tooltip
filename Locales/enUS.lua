@@ -16,6 +16,7 @@ L.HELP_HEADER       = "Commands:"
 L.HELP_OPEN         = "/ptt – open the options"
 L.HELP_RESET        = "/ptt reset – reset all settings to their defaults"
 L.HELP_DEBUG        = "/ptt debug – show what the game lets the addon read (troubleshooting)"
+L.HELP_MINIMAP      = "/ptt minimap – show or hide the shared Pardona minimap button"
 L.HELP_HELP         = "/ptt help – show this list"
 
 -- /ptt debug
@@ -35,6 +36,12 @@ L.RESET_DONE        = "All settings have been reset."
 L.UNKNOWN_COMMAND   = "Unknown command \"%s\". Type /ptt help for a list."
 L.OPEN_AFTER_COMBAT = "The options will open after combat."
 L.NO_SETTINGS_API   = "The options window is not available in this client."
+L.LIB_NOT_LOADED    = "Shared library not loaded."
+
+-- Shared Pardona library (lib-pardona): settings page name and status
+L.SETTINGS_NAME     = "ToolTips"
+L.STATUS_ACTIVE     = "active"
+L.STATUS_ACTIVE_NO_TSM = "active (no TSM)"
 
 -- Options: sections
 L.SECTION_APPEARANCE = "Appearance"
@@ -170,3 +177,5 @@ L.HEALTH_FORMAT       = "%s (%s)"
 L.RESET               = "Reset settings"
 L.RESET_BUTTON        = "Reset"
 L.RESET_TT            = "Resets all settings of Pardona's ToolTips to their defaults."
+L.OPT_MINIMAP           = "Show minimap button"
+L.OPT_MINIMAP_TT        = "Shows the shared minimap button of Pardona's Addons. The setting applies to all Pardona addons."

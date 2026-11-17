@@ -10,6 +10,8 @@
 ## X-Curse-Project-ID: 1810747
 ## OptionalDeps: TradeSkillMaster
 
+Libs\lib-pardona\lib-pardona.xml
+
 Locales\enUS.lua
 Locales\deDE.lua
 
@@ -17,6 +19,7 @@ Core\Init.lua
 Core\Secret.lua
 Core\Database.lua
 Core\Format.lua
+Core\Pardona.lua
 
 Appearance\ColorSets.lua
 Appearance\Fonts.lua

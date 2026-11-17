@@ -3,11 +3,12 @@
 std = "lua51"
 max_line_length = false
 
--- Only the addon's own Lua files are checked.
+-- Only the addon's own Lua files are checked (Libs/ holds the embedded lib-pardona).
 exclude_files = {
     ".release/**",
     ".github/**",
     "media/**",
+    "Libs/**",
 }
 
 -- Globals the addon writes
@@ -26,8 +27,8 @@ globals = {
 
 -- WoW API, Blizzard frames, constants and mixins the addon reads.
 -- Deliberately read through _G and therefore not listed: issecretvalue and
--- canaccesstable (only on clients with secret values), LibStub (only present when
--- another addon ships it), InspectFrame (load-on-demand Blizzard UI), TSM_API (optional
+-- canaccesstable (only on clients with secret values), LibStub (loaded by the embedded
+-- Libs/lib-pardona or another addon; the addon must keep working without it), InspectFrame (load-on-demand Blizzard UI), TSM_API (optional
 -- TradeSkillMaster), GetNumSkillLines/GetSkillLineInfo (older skill API fallback),
 -- GetNumTalentTabs/GetTalentTabInfo (Classic talent tab API, may be missing on WoW
 -- Forever), the power type names (global strings such as MANA, looked up by token) and

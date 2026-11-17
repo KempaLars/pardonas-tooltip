@@ -1,6 +1,8 @@
 -- Pardona's ToolTips - options window (Blizzard Settings API, vertical layout).
 -- Every control is bound to PardonasToolTipsDB through Settings.RegisterAddOnSetting
 -- and applies its change immediately, without /reload.
+-- With lib-pardona the page is a subcategory of "Pardona's Addons"; without it the page
+-- is registered as an AddOn category of its own, as before.
 
 local _, ns = ...
 local L = ns.L
@@ -11,6 +13,7 @@ ns.Options = Options
 local VARIABLE_PREFIX = "PardonasToolTips_"
 
 local category, layout
+local viaLibrary = false -- category is a lib-pardona subcategory
 local settings = {} -- db key -> setting object
 
 ---------------------------------------------------------------------------
@@ -68,6 +71,23 @@ end
 local function AddButton(name, buttonText, onClick, tooltip)
     if type(CreateSettingsButtonInitializer) ~= "function" then return end
     layout:AddInitializer(CreateSettingsButtonInitializer(name, buttonText, onClick, tooltip, true))
+end
+
+-- "Show minimap button": a proxy setting on the shared lib-pardona state, not stored in
+-- our own settings. Only added when the library is loaded.
+local function AddMinimapCheckbox()
+    local LP = ns.Pardona.Lib()
+    if not LP or type(Settings.RegisterProxySetting) ~= "function" then return end
+    local function GetValue()
+        return not LP:IsMinimapHidden()
+    end
+    local function SetValue(value)
+        LP:SetMinimapHidden(not value)
+    end
+    local ok, setting = pcall(Settings.RegisterProxySetting, category,
+        VARIABLE_PREFIX .. "minimapButton", type(true), L.OPT_MINIMAP, true, GetValue, SetValue)
+    if not ok or not setting then return end
+    Settings.CreateCheckbox(category, setting, L.OPT_MINIMAP_TT)
 end
 
 -- Shows child only while predicate() is true (where the client supports it).
@@ -157,7 +177,14 @@ end
 -- Category
 ---------------------------------------------------------------------------
 local function Build()
-    category, layout = Settings.RegisterVerticalLayoutCategory(L.TITLE)
+    local LP = ns.Pardona.Lib()
+    if LP then
+        category, layout = LP:RegisterSettingsVertical(ns.Pardona.ID, L.SETTINGS_NAME)
+        viaLibrary = category ~= nil
+    end
+    if not category then
+        category, layout = Settings.RegisterVerticalLayoutCategory(L.TITLE)
+    end
 
     AddHeader(L.SECTION_APPEARANCE)
 
@@ -202,9 +229,11 @@ local function Build()
     AddSlider("minSoldPerDay", L.OPT_MIN_SOLD, L.OPT_MIN_SOLD_TT, FormatOneDecimal)
 
     AddHeader(L.SECTION_GENERAL)
+    AddMinimapCheckbox()
     AddButton(L.RESET, L.RESET_BUTTON, Options.ResetAll, L.RESET_TT)
 
-    Settings.RegisterAddOnCategory(category)
+    -- A lib-pardona subcategory is already part of "Pardona's Addons".
+    if not viaLibrary then Settings.RegisterAddOnCategory(category) end
 end
 
 local function SettingsAvailable()
@@ -220,7 +249,12 @@ function Options.Open()
         return
     end
     local opened = ns.RunOutOfCombat("openOptions", function()
-        Settings.OpenToCategory(category:GetID())
+        local LP = ns.Pardona.Lib()
+        if viaLibrary and LP then
+            LP:OpenSettings(ns.Pardona.ID)
+        else
+            Settings.OpenToCategory(category:GetID())
+        end
     end)
     if not opened then ns.Print(L.OPEN_AFTER_COMBAT) end
 end
@@ -230,6 +264,7 @@ ns.OnLoad(function()
     local ok, err = pcall(Build)
     if not ok then
         category = nil
+        viaLibrary = false
         local handler = geterrorhandler and geterrorhandler()
         if handler then handler(err) end
     end
