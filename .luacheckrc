@@ -32,7 +32,9 @@ globals = {
 -- TradeSkillMaster), GetNumSkillLines/GetSkillLineInfo (older skill API fallback),
 -- GetNumTalentTabs/GetTalentTabInfo (Classic talent tab API, may be missing on WoW
 -- Forever), the power type names (global strings such as MANA, looked up by token) and
--- the classification words RARE, ELITE and BOSS (global strings, RARE may be missing).
+-- the classification words RARE, ELITE, BOSS and ITEM_QUALITY3_DESC (global strings, RARE
+-- is missing on WoW Forever), BreakUpLargeNumbers (number formatter, may refuse secret
+-- values), PowerBarColor (resource colors) and C_ClassTalents (trait based talents).
 read_globals = {
     -- Frames and font objects
     "GameTooltip",

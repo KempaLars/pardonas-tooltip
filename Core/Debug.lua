@@ -2,7 +2,9 @@
 --
 -- Prints for "player", "mouseover", "target" and (when in a group) "party1": existence,
 -- name, GUID availability, health, power and the percent APIs, each as its value or
--- "secret", plus the C_Secrets predicates about units and the available talent APIs.
+-- "secret", plus the C_Secrets predicates about units and the available talent APIs,
+-- the raw talent tab values and the trait config of the own character, and the raw text
+-- of every left line of the shown GameTooltip.
 --
 -- Every call is protected and secret values are never compared, calculated or turned
 -- into text: they are only reported as "secret". The command can never raise a Lua error.
@@ -94,6 +96,101 @@ local function PrintGlobals()
     }))
 end
 
+local function Pack(...)
+    return { n = select("#", ...), ... }
+end
+
+-- "type:value" for each value of a packed result from index first on, "secret" for
+-- secret values.
+local function DescribeTyped(r, first)
+    local parts = {}
+    for i = first, r.n do
+        local v = r[i]
+        if S.IsSecret(v) then
+            parts[#parts + 1] = L.DEBUG_SECRET
+        else
+            parts[#parts + 1] = type(v) .. ":" .. Describe(v)
+        end
+    end
+    if #parts == 0 then return L.DEBUG_NONE end
+    return Pairs(parts)
+end
+
+local function Range(a, b)
+    return Describe(a) .. ".." .. Describe(b)
+end
+
+-- Talent tabs (raw) and the trait config of the own character.
+local function PrintTalents()
+    local numTabs, tabInfo = _G.GetNumTalentTabs, _G.GetTalentTabInfo
+    if type(numTabs) == "function" and type(tabInfo) == "function" then
+        local ok, count = pcall(numTabs, false)
+        ns.Print("GetNumTalentTabs(false)=" .. (ok and Describe(count) or L.DEBUG_ERROR))
+        count = ok and S.Number(count) or 0
+        if count > 5 then count = 5 end
+        for tab = 1, count do
+            local r = Pack(pcall(tabInfo, tab, false))
+            if r[1] then
+                ns.Print(L.DEBUG_TALENT_TAB:format(tab, DescribeTyped(r, 2)))
+            else
+                ns.Print(L.DEBUG_TALENT_TAB:format(tab, L.DEBUG_ERROR))
+            end
+        end
+    end
+
+    local classTalents = S.Table(_G.C_ClassTalents)
+    ns.Print("C_ClassTalents.GetActiveConfigID=" .. (classTalents
+        and Result(classTalents.GetActiveConfigID) or L.DEBUG_MISSING))
+    local scan = Spec.TraitsScan()
+    if not scan then
+        ns.Print("C_Traits: " .. L.DEBUG_MISSING)
+        return
+    end
+    local trees = {}
+    for _, treeID in ipairs(scan.treeIDs) do trees[#trees + 1] = tostring(treeID) end
+    ns.Print(Pairs({
+        "treeIDs=" .. (#trees > 0 and table.concat(trees, "/") or L.DEBUG_NONE),
+        L.DEBUG_NODES .. "=" .. scan.nodes,
+        "posX=" .. Range(scan.minX, scan.maxX),
+        "posY=" .. Range(scan.minY, scan.maxY),
+    }))
+    ns.Print(Pairs({
+        "ranksPurchased=" .. scan.purchased,
+        "activeRank=" .. scan.active,
+        L.DEBUG_NODES_RANKED .. "=" .. scan.ranked,
+    }))
+end
+
+-- Raw text of every left line of GameTooltip ("secret" for secret lines).
+local function PrintTooltipLines()
+    if S.Method(GameTooltip, "IsShown") ~= true then
+        ns.Print(L.DEBUG_TOOLTIP_HIDDEN)
+        return
+    end
+    local count = Units.NumLines(GameTooltip)
+    ns.Print(L.DEBUG_TOOLTIP_LINES:format(count))
+    for i = 1, count do
+        local fontString = Units.Line(GameTooltip, "Left", i)
+        local text
+        if not fontString then
+            text = "nil"
+        else
+            local ok, value = pcall(fontString.GetText, fontString)
+            if not ok then
+                text = L.DEBUG_ERROR
+            elseif S.IsSecret(value) then
+                text = L.DEBUG_SECRET
+            elseif value == nil then
+                text = "nil"
+            else
+                -- Escape "|" so color codes are printed instead of applied.
+                text = "\"" .. tostring(value):gsub("|", "||") .. "\""
+            end
+        end
+        ns.Print(("  %d: %s"):format(i, text))
+    end
+end
+
 local function GUIDState(unit)
     local ok, guid = pcall(UnitGUID, unit)
     if not ok then return L.DEBUG_ERROR end
@@ -158,9 +255,12 @@ end
 
 -- Prints the whole report. Errors are caught and reported in one line.
 function Debug.Run()
+    Spec.Invalidate()
     local ok = pcall(PrintGlobals)
+    ok = pcall(PrintTalents) and ok
     for _, unit in ipairs(UNITS) do
         ok = pcall(PrintUnit, unit) and ok
     end
+    ok = pcall(PrintTooltipLines) and ok
     if not ok then ns.Print(L.DEBUG_FAILED) end
 end

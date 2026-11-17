@@ -38,19 +38,23 @@ through your target, which the game often reveals in more detail.
 - **Mobs**: classification on the level line. If the game already writes it there (for
   example `Elite`), that word is only colored; otherwise *(Elite)*, *(Rare)*,
   *(Rare Elite)* or *(Boss)* is appended. Normal mobs get nothing. With the option off the
-  level line stays unchanged.
-- **Health text** on the health bar below the tooltip, for example `1,234 / 2,000 (62%)`
-  (number format follows the client language). The game does not reveal the exact health
-  of every unit (for example players outside your group); then only the percentage is
-  shown, for example `62%`. If even the percentage is hidden from addons, the game may still
-  let the addon pass it on for display; otherwise the text is left out.
+  level line stays unchanged. The word is recognized in the spelling of the game's own
+  strings and in the addon's own spelling (`Rare`, German `Rar`); for rare mobs also the
+  item quality word (`Rare`, German `Selten`), because this client has no own string for it.
+- **Health text** on the health bar below the tooltip, for example `812 / 1,025 (79%)`
+  (number format follows the client language). WoW Forever hides the current health from
+  addons, even your own, but lets the addon pass it on for display; the maximum is readable.
+  The text is therefore shown in full whenever possible. If that does not work, only the
+  percentage is shown, for example `79%`; if even that is impossible, the text is left out.
 - **Target** of the unit in class or reaction color, or `>> YOU <<` if it targets you.
 - **Speed**: current movement speed in percent of normal run speed, updated live while the
   tooltip shows the unit.
-- **Resource**: the unit's main resource with its name in your language, for example
-  `Mana: 1,815 / 2,000`, `Energy: 100 / 100` or `Rage: 0 / 100`. If only the percentage is
-  readable: `Mana: 80%`. Units without a resource (maximum 0) get no line, and neither do
-  units whose values are hidden completely.
+- **Resource bar**: a second bar directly below the health bar, same width and height, in
+  the color the game uses for the resource (mana blue, rage red, energy yellow …; blue if
+  unknown), with the same text as the health bar, for example `1,815 / 1,863 (97%)`. Like the
+  health bar it hangs below the tooltip and never covers its lines. It follows the unit's
+  resource live while the tooltip shows it. Units without a resource (maximum 0) or whose
+  maximum is hidden get no bar. Works for players and mobs.
 - **Item level** (players): average item level with one decimal. Your own character is
   calculated directly. Other players are inspected only out of combat, only when they can
   be inspected and are in range, at most one request every 1.5 seconds; results are kept
@@ -64,6 +68,11 @@ through your target, which the game often reveals in more detail.
   same inspect request as the item level (same rules and cache). The line needs the game's
   talent tree functions; if the client does not offer them, it is not shown (`/ptt debug`
   tells whether they are available).
+  - *Experimental, own character only:* WoW Forever names the three trees but reports no
+    spent points. The addon then reads the talents of your active talent configuration and
+    counts the points per tree by position: it assumes the three trees are drawn side by
+    side, left to right in tab order, equally wide. If that assumption is wrong for a class,
+    the numbers are wrong too. Other players get no spec line until a reliable way is found.
 
 ### Items
 
@@ -169,6 +178,10 @@ Pardona's Buff Reminder) through the embedded library lib-pardona:
 - `/ptt minimap` or the *Show minimap button* option shows or hides the shared button. Hide
   it there if you prefer the panel launcher.
 
+The library must lie at exactly `Libs\lib-pardona` inside the addon folder: the Pardona
+emblem textures are loaded from there, and the overview shows the version from the TOC
+(`dev` in a development checkout).
+
 If the library is missing (for example a development checkout without `Libs/`), everything
 works as before: the options are a category of their own, there is no minimap button, and
 `/ptt minimap` only says that the shared library is not loaded.
@@ -187,7 +200,7 @@ If `/ptt` is used during combat, the options open as soon as combat ends.
 
 ## Troubleshooting
 
-If a line is missing (for example the health text or the resource of another player), type
+If something is missing (for example the health text or the resource bar of another player), type
 `/ptt debug`. The addon then prints to the chat what the game lets it read, for your character,
 your mouseover unit, your target and – in a group – the first party member:
 
@@ -198,7 +211,13 @@ your mouseover unit, your target and – in a group – the first party member:
 - whether the game's functions for hidden values (`issecretvalue`, `C_Secrets`, percent
   functions) exist, and the `C_Secrets` checks for units,
 - whether the talent tree functions exist and your own spec,
+- the talent block: every value of `GetTalentTabInfo` per tree (type and value), the active
+  talent configuration, its tree IDs, the number of talent nodes, the range of their
+  positions, the sum of purchased ranks and the number of nodes with a rank,
 - which game events the addon skipped because this client does not know them.
+- the raw text of every left line of the tooltip currently shown (`secret` for hidden lines;
+  color codes are printed, not applied) – useful to see how the game writes a mob's level
+  line, for example on a rare mob,
 
 Every value is shown as it is, as `secret` (the game hides it from addons) or as `nil`
 (no value). Hover a unit with the mouse and type the command into the chat to include it.
@@ -232,7 +251,7 @@ Without the shared library (see Pardona's Addons) the page is *Options → AddOn
 | Health text | On |
 | Target | On |
 | Speed | On |
-| Resource (mana, rage, energy …) | On |
+| Resource (mana, rage, energy …) – resource bar | On |
 | Item level (players) | On |
 | Spec (players) | On |
 | Classification (mobs) | On |

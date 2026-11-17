@@ -3,7 +3,9 @@
 -- API or error). Callers then leave the affected line out.
 
 local _, ns = ...
+local L = ns.L
 local S = ns.Secret
+local Format = ns.Format
 local ColorSets = ns.ColorSets
 
 local Units = {}
@@ -118,13 +120,13 @@ end
 ---------------------------------------------------------------------------
 -- Health and power
 --
--- Results come in three grades, matching what the game lets addons read:
---   "exact",   current, max   both numbers readable (max > 0)
---   "percent", percent        only the percentage (0-100) is readable
---   "secret",  value          the percentage is a secret value (0-100); it may only be
---                             passed on to the game (string.format, SetText), never
---                             compared or calculated
--- nil means nothing to show (unit gone, no resource, maximum 0, API missing).
+-- Readings come in three parts, matching what the game lets addons read:
+--   current  raw value; may be a secret value. A secret current value is only ever
+--            passed on to the game (string.format, StatusBar:SetValue, SetText), never
+--            compared or calculated.
+--   max      clean number or nil (nil when secret or missing)
+--   percent  only fetched when current is not readable: a clean number (0-100), a
+--            secret value (0-100) or nil
 ---------------------------------------------------------------------------
 
 -- Curve that makes the percent APIs return 0-100 instead of 0-1 (nil when missing).
@@ -151,18 +153,6 @@ local function PercentCall(fn, ...)
     return value and value * 100 or nil
 end
 
-local function Graded(current, max, percentFn, ...)
-    if current and max then
-        if max <= 0 then return nil end
-        return "exact", current, max
-    end
-    if max and max <= 0 then return nil end
-    local percent = PercentCall(percentFn, ...)
-    if percent == nil then return nil end
-    if S.IsSecret(percent) then return "secret", percent end
-    return "percent", percent
-end
-
 -- Raw result of UnitHealthPercent (0-100; may be secret), for diagnostics.
 function Units.HealthPercentRaw(unit)
     return PercentCall(UnitHealthPercent, unit, false)
@@ -173,11 +163,78 @@ function Units.PowerPercentRaw(unit, powerType)
     return PercentCall(UnitPowerPercent, unit, powerType, false)
 end
 
--- Health of unit as grade, value(s); see above.
-function Units.Health(unit)
-    local current = S.Number(S.CallClean(UnitHealth, unit))
+-- Text of a whole number that may be secret, with thousands separators when possible.
+-- Clean numbers use Format.Number. Secret numbers first try Blizzard's
+-- BreakUpLargeNumbers (read through _G, may be missing or refuse secret values), then
+-- string.format("%d"). Returns text, ok; the text may be a secret string.
+local function NumberText(value)
+    local clean = S.Number(value)
+    if clean then return Format.Number(clean), true end
+    if not S.IsSecret(value) then return nil, false end
+    local breakUp = _G.BreakUpLargeNumbers
+    if type(breakUp) == "function" then
+        local ok, text = pcall(breakUp, value)
+        -- Only accept a string (secret or clean); type() is not used on secret values.
+        if ok and (S.IsSecret(text) or type(text) == "string") then return text, true end
+    end
+    local ok, text = pcall(string.format, "%d", value)
+    if ok then return text, true end
+    return nil, false
+end
+
+-- Text "current / max (percent)" for a reading, for example "812 / 1,025 (79%)".
+-- Grades, best first:
+--   current and max readable          ratio and our own percentage
+--   current secret, max readable      ratio with the secret current value and the
+--                                     percent API (clean or secret)
+--   ratio impossible                  percentage only (clean or secret)
+--   nothing usable                    nil
+-- Returns text, hasText. The text may be a secret string: it may only go to our own
+-- widgets (SetText), and callers test hasText instead of comparing the text.
+-- percentFn and its arguments (without the curve) are used when current is not clean.
+function Units.ValueText(current, max, percentFn, ...)
+    if max and max <= 0 then return nil, false end
+    local cleanCurrent = S.Number(current)
+
+    local percentText, hasPercent
+    if cleanCurrent and max then
+        percentText, hasPercent = Format.Percent(cleanCurrent / max * 100), true
+    else
+        local percent = PercentCall(percentFn, ...)
+        if S.IsSecret(percent) then
+            percentText = Format.SecretPercent(percent)
+            hasPercent = S.IsSecret(percentText) or type(percentText) == "string"
+        elseif type(percent) == "number" then
+            percentText, hasPercent = Format.Percent(percent), true
+        end
+    end
+
+    if max then
+        local currentText, hasCurrent = NumberText(current)
+        if hasCurrent then
+            local ok, ratio = pcall(string.format, L.RATIO_FORMAT, currentText, Format.Number(max))
+            if ok then
+                if not hasPercent then return ratio, true end
+                local ok2, text = pcall(string.format, L.VALUE_FORMAT, ratio, percentText)
+                if ok2 then return text, true end
+            end
+        end
+    end
+    if hasPercent then return percentText, true end
+    return nil, false
+end
+
+-- Health of unit: current (raw, may be secret), max (clean or nil).
+function Units.HealthValues(unit)
+    local current = S.Call(UnitHealth, unit)
     local max = S.Number(S.CallClean(UnitHealthMax, unit))
-    return Graded(current, max, UnitHealthPercent, unit, false)
+    return current, max
+end
+
+-- Health text of unit (see Units.ValueText); nil when nothing can be shown.
+function Units.HealthText(unit)
+    local current, max = Units.HealthValues(unit)
+    return Units.ValueText(current, max, UnitHealthPercent, unit, false)
 end
 
 -- Global string key of a power type from Enum.PowerType, for example "RunicPower" ->
@@ -204,16 +261,19 @@ function Units.PowerType(unit)
     return powerType, token, name
 end
 
--- Main resource of unit: grade, value(s), localized name; see above. nil when the unit
--- has no resource, its maximum is 0 or its name is unknown.
-function Units.Power(unit)
-    local powerType, _, name = Units.PowerType(unit)
-    if not powerType or not name or name == "" then return nil end
-    local current = S.Number(S.CallClean(UnitPower, unit, powerType))
+-- Main resource of unit: powerType, token, current (raw, may be secret), max (clean or
+-- nil). nil when the power type is unknown.
+function Units.PowerValues(unit)
+    local powerType, token = Units.PowerType(unit)
+    if not powerType then return nil end
+    local current = S.Call(UnitPower, unit, powerType)
     local max = S.Number(S.CallClean(UnitPowerMax, unit, powerType))
-    local grade, a, b = Graded(current, max, UnitPowerPercent, unit, powerType, false)
-    if not grade then return nil end
-    return grade, a, b, name
+    return powerType, token, current, max
+end
+
+-- Text of the main resource (see Units.ValueText) for a known power type.
+function Units.PowerText(unit, powerType, current, max)
+    return Units.ValueText(current, max, UnitPowerPercent, unit, powerType, false)
 end
 
 ---------------------------------------------------------------------------

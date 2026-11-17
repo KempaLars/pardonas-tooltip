@@ -4,8 +4,13 @@
 -- API documented in the library's README is used.
 -- The library is optional: without it (folder missing, LibStub missing) the addon works
 -- as before, without an error and without chat text.
+--
+-- info.addon (LibPardona-1.0 MINOR 3 and later) is the folder name from the TOC
+-- ("PardonasToolTips"). The library reads the version from it and loads its emblem
+-- textures by convention from Interface\AddOns\<addon>\Libs\lib-pardona\..., so the
+-- library must be embedded at exactly Libs\lib-pardona.
 
-local _, ns = ...
+local ADDON, ns = ...
 local L = ns.L
 
 local Pardona = {}
@@ -54,6 +59,7 @@ ns.OnLoad(function()
     -- of combat, like /ptt.
     local ok, err = pcall(LP.RegisterAddon, LP, Pardona.ID, {
         name    = L.TITLE,
+        addon   = ADDON,
         icon    = "Interface\\AddOns\\PardonasToolTips\\Textures\\Icon",
         db      = ns.db.pardona,
         onClick = function() ns.Options.Open() end,

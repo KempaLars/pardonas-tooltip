@@ -2,20 +2,20 @@
 --
 -- The text is our own FontString created on GameTooltipStatusBar; no field is written
 -- to the Blizzard frame. What it shows depends on what the game lets addons read
--- (see Units.Health):
---   exact values readable    "1,234 / 2,000 (62%)"
---   only percentage readable "62%"
---   percentage secret        "62%" as a secret string, shown through SetText only
---   nothing readable         text hidden, the bar stays as Blizzard drew it
+-- (see Units.ValueText):
+--   current and max readable          "1,234 / 2,000 (62%)"
+--   current secret, max readable      "812 / 1,025 (79%)", the current value and maybe
+--                                     the percentage as secret strings, shown through
+--                                     SetText only
+--   only the percentage               "62%" (clean or secret)
+--   nothing readable                  text hidden, the bar stays as Blizzard drew it
 --
 -- The unit's GUID is not required: when it is readable it is used to notice that the
 -- token now points to another unit; otherwise the text is reset when the tooltip shows
 -- another unit or hides.
 
 local _, ns = ...
-local L = ns.L
 local Units = ns.Units
-local Format = ns.Format
 local S = ns.Secret
 
 local HealthText = {}
@@ -43,19 +43,6 @@ local function EnsureText()
     return text
 end
 
--- Text for the current unit: a plain string, a secret string or nil.
-local function BuildText(unit)
-    local grade, a, b = Units.Health(unit)
-    if grade == "exact" then
-        return L.HEALTH_FORMAT:format(Format.Ratio(a, b), Format.Percent(a / b * 100))
-    elseif grade == "percent" then
-        return Format.Percent(a)
-    elseif grade == "secret" then
-        return Format.SecretPercent(a)
-    end
-    return nil
-end
-
 -- Refreshes the text from the current unit (called on unit change and bar updates).
 function HealthText.Update()
     local db = ns.db
@@ -71,8 +58,8 @@ function HealthText.Update()
             return
         end
     end
-    local value = BuildText(currentUnit)
-    if value == nil then
+    local value, hasText = Units.HealthText(currentUnit)
+    if not hasText then
         Hide()
         return
     end

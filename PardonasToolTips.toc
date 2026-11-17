@@ -27,6 +27,7 @@ Units\Units.lua
 Appearance\Appearance.lua
 
 Units\HealthText.lua
+Units\PowerBar.lua
 Units\Spec.lua
 Units\ItemLevel.lua
 Units\UnitInfo.lua

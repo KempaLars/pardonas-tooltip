@@ -3,7 +3,8 @@
 -- Blizzard lines are kept. Existing lines are only recolored (when their text is not
 -- secret); our own lines are appended at the bottom with AddLine/AddDoubleLine in this
 -- order: classification (only if the level line could not be used), target, speed,
--- resource, item level, spec. Every line whose values are secret is left out silently.
+-- item level, spec. Every line whose values are secret is left out silently. Health
+-- text and resource bar are drawn on bars below the tooltip (HealthText, PowerBar).
 --
 -- The unit's GUID is optional. Without it everything that needs no cache still works;
 -- item level and spec of other players (cached per GUID) are then skipped.
@@ -15,6 +16,7 @@ local Units = ns.Units
 local Format = ns.Format
 local ColorSets = ns.ColorSets
 local HealthText = ns.HealthText
+local PowerBar = ns.PowerBar
 local ItemLevel = ns.ItemLevel
 local Spec = ns.Spec
 
@@ -25,13 +27,17 @@ local BASE_RUN_SPEED = 7       -- yards per second at 100 % run speed
 local SPEED_INTERVAL = 0.2     -- seconds between live speed updates
 
 -- Classification -> locale key of our tag, text color role and the words the client may
--- already write into the level line. Each word names a Blizzard global string (read
--- through _G, may be missing) and the locale key of our tag for just that word.
+-- already write into the level line. Each word lists Blizzard global strings (read
+-- through _G, may be missing) that may hold it, and the locale key of our tag for just
+-- that word; the tag without its brackets (for example "Rare" from "(Rare)") counts as
+-- a spelling of the word as well.
 -- Rare elite is checked as its two words, because the client has no own global string
--- for it; ITEM_QUALITY3_DESC is not used (item quality, "Selten" in German, not "Rar").
-local WORD_RARE  = { global = "RARE",  tag = "CLASS_RARE" }
-local WORD_ELITE = { global = "ELITE", tag = "CLASS_ELITE" }
-local WORD_BOSS  = { global = "BOSS",  tag = "CLASS_BOSS" }
+-- for it. RARE is missing in the WoW Forever client, so rare also accepts
+-- ITEM_QUALITY3_DESC (item quality "Rare"; in German "Selten", which only matches if the
+-- client writes that word).
+local WORD_RARE  = { globals = { "RARE", "ITEM_QUALITY3_DESC" }, tag = "CLASS_RARE" }
+local WORD_ELITE = { globals = { "ELITE" }, tag = "CLASS_ELITE" }
+local WORD_BOSS  = { globals = { "BOSS" },  tag = "CLASS_BOSS" }
 
 local CLASSIFICATIONS = {
     worldboss = { text = "CLASS_BOSS",      role = "elite", words = { WORD_BOSS } },
@@ -155,6 +161,45 @@ local function FindWord(text, word)
     return found[1], found[2]
 end
 
+-- Spellings of a word entry: its global strings and our tag without brackets, without
+-- duplicates and empty or secret values.
+local function WordSpellings(word)
+    local list, seen = {}, {}
+    local function Add(text)
+        if text and text ~= "" and not seen[text] then
+            seen[text] = true
+            list[#list + 1] = text
+        end
+    end
+    for _, name in ipairs(word.globals) do
+        Add(S.String(_G[name]))
+    end
+    local tag = S.String(L[word.tag])
+    if tag then Add(tag:match("^%((.+)%)$") or tag) end
+    return list
+end
+
+-- Finds a word entry in the level line. Returns "done" when one spelling is already
+-- colored by us, first, last of the single whole-word occurrence, "ambiguous" when a
+-- spelling occurs more than once, or nil when no spelling occurs.
+local function FindClassWord(lineText, word, role)
+    -- Our own tag for this word was appended earlier (tooltip refreshed). Checked first,
+    -- because the bare spelling ("Rare") would otherwise match inside "(Rare)".
+    if lineText:find(ColorSets.Colorize(role, L[word.tag]), 1, true) then return "done" end
+    local found, foundLast
+    for _, spelling in ipairs(WordSpellings(word)) do
+        if lineText:find(ColorSets.Colorize(role, spelling), 1, true) then return "done" end
+        local first, last = FindWord(lineText, spelling)
+        if first == "ambiguous" then return "ambiguous" end
+        if first then
+            -- Two different spellings found at different places: ambiguous.
+            if found and found ~= first then return "ambiguous" end
+            found, foundLast = first, last
+        end
+    end
+    return found, foundLast
+end
+
 -- Handles the level line text for a classification entry. Returns the new text, or
 -- nil to leave the line unchanged.
 --   * Words the client already wrote are colored in the set color (each must occur
@@ -164,15 +209,7 @@ end
 local function ClassifiedLevelText(lineText, entry)
     local missing, ranges = {}, {}
     for _, word in ipairs(entry.words) do
-        local global = S.String(_G[word.global])
-        local first, last
-        if global and global ~= "" then
-            if lineText:find(ColorSets.Colorize(entry.role, global), 1, true) then
-                first = "done"
-            else
-                first, last = FindWord(lineText, global)
-            end
-        end
+        local first, last = FindClassWord(lineText, word, entry.role)
         if first == "ambiguous" then return nil end
         if first == nil then
             missing[#missing + 1] = word
@@ -255,21 +292,6 @@ local function AddSpeed(tooltip, unit)
     local text = SpeedText(unit)
     if not text then return nil end
     return AddPair(tooltip, L.LINE_SPEED, text)
-end
-
--- Main resource with its localized name: "Energy: 100 / 100" or "Mana: 80%".
--- A secret percentage is left out: our line lives in a Blizzard tooltip line, and a
--- secret text there would make the line unreadable for other code.
-local function AddResource(tooltip, unit)
-    local grade, a, b, name = Units.Power(unit)
-    local value
-    if grade == "exact" then
-        value = Format.Ratio(a, b)
-    elseif grade == "percent" then
-        value = Format.Percent(a)
-    end
-    if not value then return end
-    AddPair(tooltip, L.LINE_RESOURCE:format(name), value)
 end
 
 -- Item level and spec: own character directly, other players from the inspect cache
@@ -362,12 +384,14 @@ local function OnUnitTooltip(tooltip, data)
     local source = Units.Resolve(tooltip, data)
     if not source then
         HealthText.SetUnit(nil)
+        PowerBar.SetUnit(nil)
         return
     end
     -- When the unit is also the player's target, read it through "target".
     local unit = Units.PreferTarget(source)
     current = { unit = unit, source = source, guid = Units.GUID(unit) }
     HealthText.SetUnit(unit)
+    PowerBar.SetUnit(unit)
 
     local isPlayer = Units.IsPlayer(unit)
     local classificationLine
@@ -383,7 +407,6 @@ local function OnUnitTooltip(tooltip, data)
         current.speedLine = AddSpeed(tooltip, unit)
         if current.speedLine then StartTicker() end
     end
-    if db.unitMana then AddResource(tooltip, unit) end
     if isPlayer == true and (db.unitItemLevel or db.unitSpec) then
         AddInspectLines(tooltip, unit, current.guid, db)
     end
@@ -419,6 +442,7 @@ local function OnTargetChanged()
     if not current or current.unit ~= "target" or current.source == "target" then return end
     current.unit = current.source
     HealthText.SetUnit(current.source)
+    PowerBar.SetUnit(current.source)
 end
 
 ns.OnLoad(function()
