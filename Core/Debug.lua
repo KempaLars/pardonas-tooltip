@@ -4,7 +4,8 @@
 -- name, GUID availability, health, power and the percent APIs, each as its value or
 -- "secret", plus the C_Secrets predicates about units and the available talent APIs,
 -- the raw talent tab values and the trait config of the own character, and the raw text
--- of every left line of the shown GameTooltip.
+-- of every left line of the shown GameTooltip. One line reports the build type, the
+-- experimental setting and its effective value.
 --
 -- Every call is protected and secret values are never compared, calculated or turned
 -- into text: they are only reported as "secret". The command can never raise a Lua error.
@@ -77,6 +78,10 @@ local function PrintGlobals()
         "UnitPowerPercent=" .. YesNo(type(UnitPowerPercent) == "function"),
         "CurveConstants.ScaleTo100=" .. YesNo(curves ~= nil and curves.ScaleTo100 ~= nil),
     }))
+    local db = ns.db
+    ns.Print(L.DEBUG_EXPERIMENTAL:format(ns.BuildType(),
+        tostring(db and db.experimental or ns.DEFAULTS.experimental),
+        ns.IsExperimental() and "on" or "off"))
     local secrets = S.Table(C_Secrets)
     local parts = {}
     for _, name in ipairs(SecretPredicates(IsGlobalPredicate)) do

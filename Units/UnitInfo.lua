@@ -296,12 +296,19 @@ end
 
 -- Item level and spec: own character directly, other players from the inspect cache
 -- (a request is made when nothing is cached). Sets current.itemLevelShown/specShown.
+-- The spec line is an experimental feature: shown only when the option is on and the
+-- experimental features are on (ns.IsExperimental), checked on every tooltip.
+local function ShowSpec(db)
+    return db.unitSpec and ns.IsExperimental()
+end
+
 local function AddInspectLines(tooltip, unit, guid, db)
     local isSelf = Units.IsSelf(unit)
+    local showSpec = ShowSpec(db)
     local level, spec
     if isSelf == true then
         if db.unitItemLevel then level = ItemLevel.Compute("player") end
-        if db.unitSpec then spec = Spec.Text(false) end
+        if showSpec then spec = Spec.Text(false) end
     elseif isSelf == false and guid then
         local entry = ItemLevel.Cached(guid)
         if entry then
@@ -314,7 +321,7 @@ local function AddInspectLines(tooltip, unit, guid, db)
         AddPair(tooltip, L.LINE_ITEM_LEVEL, Format.Decimal(level, 1))
         current.itemLevelShown = true
     end
-    if db.unitSpec and spec then
+    if showSpec and spec then
         AddPair(tooltip, L.LINE_SPEC, spec)
         current.specShown = true
     end
@@ -407,7 +414,7 @@ local function OnUnitTooltip(tooltip, data)
         current.speedLine = AddSpeed(tooltip, unit)
         if current.speedLine then StartTicker() end
     end
-    if isPlayer == true and (db.unitItemLevel or db.unitSpec) then
+    if isPlayer == true and (db.unitItemLevel or ShowSpec(db)) then
         AddInspectLines(tooltip, unit, current.guid, db)
     end
 end
@@ -423,7 +430,7 @@ local function OnInspectResult(guid, entry)
         current.itemLevelShown = true
         added = true
     end
-    if db.unitSpec and entry.spec and not current.specShown then
+    if ShowSpec(db) and entry.spec and not current.specShown then
         AddPair(GameTooltip, L.LINE_SPEC, entry.spec)
         current.specShown = true
         added = true

@@ -182,6 +182,25 @@ local function NumberText(value)
     return nil, false
 end
 
+-- Percentage text for a reading, for example "79%": our own calculation when current
+-- and max are readable, otherwise the percent API (clean or secret). Returns text,
+-- hasText; the text may be a secret string (see Units.ValueText).
+function Units.PercentText(current, max, percentFn, ...)
+    if max and max <= 0 then return nil, false end
+    local cleanCurrent = S.Number(current)
+    if cleanCurrent and max then
+        return Format.Percent(cleanCurrent / max * 100), true
+    end
+    local percent = PercentCall(percentFn, ...)
+    if S.IsSecret(percent) then
+        local text = Format.SecretPercent(percent)
+        return text, S.IsSecret(text) or type(text) == "string"
+    elseif type(percent) == "number" then
+        return Format.Percent(percent), true
+    end
+    return nil, false
+end
+
 -- Text "current / max (percent)" for a reading, for example "812 / 1,025 (79%)".
 -- Grades, best first:
 --   current and max readable          ratio and our own percentage
@@ -194,20 +213,7 @@ end
 -- percentFn and its arguments (without the curve) are used when current is not clean.
 function Units.ValueText(current, max, percentFn, ...)
     if max and max <= 0 then return nil, false end
-    local cleanCurrent = S.Number(current)
-
-    local percentText, hasPercent
-    if cleanCurrent and max then
-        percentText, hasPercent = Format.Percent(cleanCurrent / max * 100), true
-    else
-        local percent = PercentCall(percentFn, ...)
-        if S.IsSecret(percent) then
-            percentText = Format.SecretPercent(percent)
-            hasPercent = S.IsSecret(percentText) or type(percentText) == "string"
-        elseif type(percent) == "number" then
-            percentText, hasPercent = Format.Percent(percent), true
-        end
-    end
+    local percentText, hasPercent = Units.PercentText(current, max, percentFn, ...)
 
     if max then
         local currentText, hasCurrent = NumberText(current)
@@ -231,10 +237,15 @@ function Units.HealthValues(unit)
     return current, max
 end
 
--- Health text of unit (see Units.ValueText); nil when nothing can be shown.
-function Units.HealthText(unit)
+-- Health text of unit: "current / max (percent)" when exact is true (see
+-- Units.ValueText), otherwise the percentage only (see Units.PercentText).
+-- Returns text, hasText.
+function Units.HealthText(unit, exact)
     local current, max = Units.HealthValues(unit)
-    return Units.ValueText(current, max, UnitHealthPercent, unit, false)
+    if exact then
+        return Units.ValueText(current, max, UnitHealthPercent, unit, false)
+    end
+    return Units.PercentText(current, max, UnitHealthPercent, unit, false)
 end
 
 -- Global string key of a power type from Enum.PowerType, for example "RunicPower" ->

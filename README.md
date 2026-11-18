@@ -23,7 +23,8 @@ A tooltip addon for **World of Warcraft: Forever** (Interface 16001, Mainline cl
   - *Blizzard* – the standard look
   - *Dark* – almost black background (about 90 %), thin gray border
   - *High contrast* – black background, white border, strong text colors
-  - *Pardona* – deep night blue with a subtle golden border
+  - *Pardona* – deep night blue with a subtle golden border (default for new installations
+    and after *Reset settings*; a color set you chose earlier is kept)
 - **Color border** (on by default): items in their quality color, players in their class
   color, NPCs in their reaction color (hostile, neutral, friendly).
 
@@ -41,15 +42,17 @@ through your target, which the game often reveals in more detail.
   level line stays unchanged. The word is recognized in the spelling of the game's own
   strings and in the addon's own spelling (`Rare`, German `Rar`); for rare mobs also the
   item quality word (`Rare`, German `Selten`), because this client has no own string for it.
-- **Health text** on the health bar below the tooltip, for example `812 / 1,025 (79%)`
-  (number format follows the client language). WoW Forever hides the current health from
-  addons, even your own, but lets the addon pass it on for display; the maximum is readable.
-  The text is therefore shown in full whenever possible. If that does not work, only the
-  percentage is shown, for example `79%`; if even that is impossible, the text is left out.
+- **Health text** on the health bar below the tooltip, for example `79%`; if the percentage
+  cannot be read either, the text is left out.
+  - *Exact health text (beta):* with the experimental features on, the text shows current
+    and maximum health, for example `812 / 1,025 (79%)` (number format follows the client
+    language). WoW Forever hides the current health from addons, even your own, but lets the
+    addon pass it on for display; the maximum is readable. The text is therefore shown in full
+    whenever possible, otherwise only the percentage.
 - **Target** of the unit in class or reaction color, or `>> YOU <<` if it targets you.
 - **Speed**: current movement speed in percent of normal run speed, updated live while the
   tooltip shows the unit.
-- **Resource bar**: a second bar directly below the health bar, same width and height, in
+- **Resource bar** (beta, only with the experimental features on): a second bar directly below the health bar, same width and height, in
   the color the game uses for the resource (mana blue, rage red, energy yellow …; blue if
   unknown), with the same text as the health bar, for example `1,815 / 1,863 (97%)`. Like the
   health bar it hangs below the tooltip and never covers its lines. It follows the unit's
@@ -62,7 +65,7 @@ through your target, which the game often reveals in more detail.
   is added. Inspect requests of other addons are not disturbed.
   The average covers the equipped slots except shirt and tabard (17 slots including the
   ranged slot); a two-handed weapon with an empty off-hand counts twice.
-- **Spec** (players): the talent tree with the most points and the points of all trees, for
+- **Spec** (players; beta, only with the experimental features on): the talent tree with the most points and the points of all trees, for
   example `Spec: Arms (31/20/0)`; on a tie both names, for example `Arms/Fury (20/20/11)`.
   No line without spent points. Your own character is read directly, other players with the
   same inspect request as the item level (same rules and cache). The line needs the game's
@@ -73,6 +76,26 @@ through your target, which the game often reveals in more detail.
     counts the points per tree by position: it assumes the three trees are drawn side by
     side, left to right in tab order, equally wide. If that assumption is wrong for a class,
     the numbers are wrong too. Other players get no spec line until a reliable way is found.
+
+### Experimental features
+
+Features marked *beta* are still being tested and depend on the switch *Experimental
+features* (options, section *General*):
+
+| Feature | When the experimental features are off |
+| --- | --- |
+| Spec line (players) | no spec line |
+| Resource bar | no resource bar (and no replacement line) |
+| Exact health text (`current / max (percent)`) | percentage only, for example `79%` |
+
+- *Automatic* (default): **on** in beta and development versions (version contains `beta` or
+  `alpha`, or a development checkout), **off** in release versions.
+- *On* / *Off*: set by hand, regardless of the version.
+- The change applies to the next tooltip, without `/reload`. The tooltip of the switch shows
+  the detected version type and what *Automatic* means for it; `/ptt debug` prints the
+  detected build type, the setting and the effective value.
+- The single options of these features (*Health text*, *Resource*, *Spec*) carry the mark
+  *(experimental)*; they only take effect while the experimental features are on.
 
 ### Items
 
@@ -215,6 +238,7 @@ your mouseover unit, your target and – in a group – the first party member:
   talent configuration, its tree IDs, the number of talent nodes, the range of their
   positions, the sum of purchased ranks and the number of nodes with a rank,
 - which game events the addon skipped because this client does not know them.
+- the build type (`dev`, `beta` or `release`), the experimental setting and its effective value,
 - the raw text of every left line of the tooltip currently shown (`secret` for hidden lines;
   color codes are printed, not applied) – useful to see how the game writes a mob's level
   line, for example on a rare mob,
@@ -238,7 +262,7 @@ Without the shared library (see Pardona's Addons) the page is *Options → AddOn
 | Font | Friz Quadrata |
 | Font size: header | 14 |
 | Font size: text | 12 |
-| Color set | Blizzard |
+| Color set | Pardona (new installations and after a reset; earlier choices are kept) |
 | Color border | On |
 
 **Players & Mobs** (each can be switched off on its own)
@@ -248,12 +272,12 @@ Without the shared library (see Pardona's Addons) the page is *Options → AddOn
 | Name in class color | On |
 | Guild color | On |
 | Color class line | On |
-| Health text | On |
+| Health text (experimental: exact text) | On |
 | Target | On |
 | Speed | On |
-| Resource (mana, rage, energy …) – resource bar | On |
+| Resource (mana, rage, energy …) – resource bar (experimental) | On |
 | Item level (players) | On |
-| Spec (players) | On |
+| Spec (players) (experimental) | On |
 | Classification (mobs) | On |
 
 **Items**
@@ -283,6 +307,8 @@ then disabled, the disenchant chances still work.
 
 **General**
 
+- *Experimental features* – Automatic (on in beta versions), On or Off; default Automatic
+  (see Experimental features).
 - *Show minimap button* – shows or hides the shared Pardona minimap button (On; only with the
   shared library). The setting applies to all Pardona addons and is not changed by *Reset settings*.
 - *Reset settings* – restores all defaults.

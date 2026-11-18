@@ -48,6 +48,7 @@ read_globals = {
     "UIParent",
 
     -- Namespaces and enums
+    "C_AddOns",
     "C_ClassColor",
     "C_EventUtils",
     "C_Item",

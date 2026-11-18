@@ -22,6 +22,7 @@ local settings = {} -- db key -> setting object
 local function OnSettingChanged()
     ns.Appearance.Refresh()
     ns.HealthText.Update()
+    ns.PowerBar.Update()
 end
 
 local function RegisterSetting(key, name)
@@ -134,6 +135,34 @@ local function CompareEntries()
     }
 end
 
+local function ExperimentalEntries()
+    return {
+        { value = "auto", label = L.EXPERIMENTAL_AUTO },
+        { value = "on",   label = L.EXPERIMENTAL_ON },
+        { value = "off",  label = L.EXPERIMENTAL_OFF },
+    }
+end
+
+local BUILD_LABELS = {
+    dev     = "BUILD_DEV",
+    beta    = "BUILD_BETA",
+    release = "BUILD_RELEASE",
+}
+
+-- Tooltip of the experimental switch: affected features, detected build type and what
+-- "Automatic" means for it. Built once with the page; the build type does not change
+-- while the game runs, so the text stays correct for every choice.
+local function ExperimentalTooltip()
+    local build = ns.BuildType()
+    local auto = build ~= "release" and L.EXPERIMENTAL_STATE_ON or L.EXPERIMENTAL_STATE_OFF
+    return L.OPT_EXPERIMENTAL_TT:format(L[BUILD_LABELS[build]], auto)
+end
+
+-- Option name with the "(experimental)" mark.
+local function Experimental(name)
+    return L.EXPERIMENTAL_NAME:format(name)
+end
+
 local function FontEntries()
     return ns.Fonts.List()
 end
@@ -205,12 +234,12 @@ local function Build()
     AddCheckbox("unitNameClassColor", L.OPT_NAME_CLASS_COLOR, L.OPT_NAME_CLASS_COLOR_TT)
     AddCheckbox("unitGuildColor", L.OPT_GUILD_COLOR, L.OPT_GUILD_COLOR_TT)
     AddCheckbox("unitClassLineColor", L.OPT_CLASS_LINE_COLOR, L.OPT_CLASS_LINE_COLOR_TT)
-    AddCheckbox("unitHealthText", L.OPT_HEALTH_TEXT, L.OPT_HEALTH_TEXT_TT)
+    AddCheckbox("unitHealthText", Experimental(L.OPT_HEALTH_TEXT), L.OPT_HEALTH_TEXT_TT)
     AddCheckbox("unitTarget", L.OPT_TARGET, L.OPT_TARGET_TT)
     AddCheckbox("unitSpeed", L.OPT_SPEED, L.OPT_SPEED_TT)
-    AddCheckbox("unitMana", L.OPT_RESOURCE, L.OPT_RESOURCE_TT)
+    AddCheckbox("unitMana", Experimental(L.OPT_RESOURCE), L.EXPERIMENTAL_HINT:format(L.OPT_RESOURCE_TT))
     AddCheckbox("unitItemLevel", L.OPT_ITEM_LEVEL, L.OPT_ITEM_LEVEL_TT)
-    AddCheckbox("unitSpec", L.OPT_SPEC, L.OPT_SPEC_TT)
+    AddCheckbox("unitSpec", Experimental(L.OPT_SPEC), L.EXPERIMENTAL_HINT:format(L.OPT_SPEC_TT))
     AddCheckbox("unitClassification", L.OPT_CLASSIFICATION, L.OPT_CLASSIFICATION_TT)
 
     AddHeader(L.SECTION_ITEMS)
@@ -229,6 +258,7 @@ local function Build()
     AddSlider("minSoldPerDay", L.OPT_MIN_SOLD, L.OPT_MIN_SOLD_TT, FormatOneDecimal)
 
     AddHeader(L.SECTION_GENERAL)
+    AddDropdown("experimental", L.OPT_EXPERIMENTAL, ExperimentalTooltip(), ExperimentalEntries)
     AddMinimapCheckbox()
     AddButton(L.RESET, L.RESET_BUTTON, Options.ResetAll, L.RESET_TT)
 

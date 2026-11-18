@@ -9,6 +9,8 @@
 --                                     SetText only
 --   only the percentage               "62%" (clean or secret)
 --   nothing readable                  text hidden, the bar stays as Blizzard drew it
+-- The exact text is an experimental feature (ns.IsExperimental). Without it only the
+-- percentage is shown, clean or secret, as in 0.1.0-beta1 (Units.PercentText).
 --
 -- The unit's GUID is not required: when it is readable it is used to notice that the
 -- token now points to another unit; otherwise the text is reset when the tooltip shows
@@ -58,7 +60,8 @@ function HealthText.Update()
             return
         end
     end
-    local value, hasText = Units.HealthText(currentUnit)
+    -- The exact text is experimental; without it only the percentage is shown.
+    local value, hasText = Units.HealthText(currentUnit, ns.IsExperimental())
     if not hasText then
         Hide()
         return

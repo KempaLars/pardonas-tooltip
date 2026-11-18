@@ -11,6 +11,8 @@
 -- Text on the bar: same grades as the health text (Units.ValueText).
 -- Color: Blizzard's PowerBarColor[token] (read through _G, may be missing), else blue.
 --
+-- The bar is an experimental feature: without it (ns.IsExperimental) no bar is shown.
+--
 -- Updates: UNIT_POWER_UPDATE / UNIT_MAXPOWER for the shown unit mark the bar dirty and
 -- refresh it after a short delay; tokens without own events (for example "mouseover")
 -- are refreshed periodically. Updates only run while the bar is shown, and only while
@@ -115,7 +117,7 @@ end
 function PowerBar.Update()
     dirty = false
     local db = ns.db
-    if not db or not db.unitMana or not currentUnit then
+    if not db or not db.unitMana or not currentUnit or not ns.IsExperimental() then
         Hide()
         return
     end
